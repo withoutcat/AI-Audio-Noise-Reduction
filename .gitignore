@@ -1,0 +1,30 @@
+# .NET build outputs (DLLs, EXEs, PDBs, etc.)
+src/**/bin/
+src/**/obj/
+
+# NuGet local cache
+.nuget/
+
+# Legacy PoC project (only compiled outputs, no source)
+src/NoiseReduction.SdkPoC/
+
+# SDK generated Doxygen documentation (hundreds of HTML files)
+res/sdk/**/doc/
+
+# SDK metadata
+res/sdk/**/.commits
+
+# IDE / OS
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+Thumbs.db
+.DS_Store
+
+# Unrelated root files (from other projects)
+verify_dashscope_qwen.js
+fix_codex_qwen_config.ps1
