@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['data_5fready_0',['DATA_READY',['../structagora_1_1rtc_1_1_audio_frame_handle_info.html#ae7c08b78152baa484bc092873ceaa52aa03ff540d4f7b9f3b01166de81cba9273',1,'agora::rtc::AudioFrameHandleInfo']]],
+  ['decreasing_1',['Decreasing',['../classagora_1_1rtc_1_1_i_rtmp_local_user.html#a692c5ab59e1da5664535c3f4df4789b6a0c3a3b20ce3f00c3ca33153dd351f84b',1,'agora::rtc::IRtmpLocalUser']]],
+  ['default_5fmetadata_5fsize_5fin_5fbyte_2',['DEFAULT_METADATA_SIZE_IN_BYTE',['../classagora_1_1rtc_1_1_i_metadata_observer.html#aa4297438e6cdde7a9faec3e137dedfe0a546cf62753609b11e9f1eab6eb8bd38b',1,'agora::rtc::IMetadataObserver']]],
+  ['delta_5fframe_3',['DELTA_FRAME',['../structagora_1_1rtc_1_1video__packet__t.html#a1dab8f6b05ebcc7c1b7a13cb77fafe7eaccd32bc3dfb0bf9bc069fa6e42df01fc',1,'agora::rtc::video_packet_t']]],
+  ['direct_5fcdn_5fstreaming_5freason_5faudio_5fpublication_4',['DIRECT_CDN_STREAMING_REASON_AUDIO_PUBLICATION',['../namespaceagora_1_1rtc.html#a2b8ea6a20594b22a8b28bb28e689db93afae0cb3cf6b5ec9eccc77dca79dc12ae',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5freason_5fbad_5fname_5',['DIRECT_CDN_STREAMING_REASON_BAD_NAME',['../namespaceagora_1_1rtc.html#a2b8ea6a20594b22a8b28bb28e689db93a1f47f1ea0d15e0bfa0808f60d0541ad1',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5freason_5ffailed_6',['DIRECT_CDN_STREAMING_REASON_FAILED',['../namespaceagora_1_1rtc.html#a2b8ea6a20594b22a8b28bb28e689db93a4b67b8349afe4c410b1d3bb0a79cd39b',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5freason_5fnet_5fconnect_7',['DIRECT_CDN_STREAMING_REASON_NET_CONNECT',['../namespaceagora_1_1rtc.html#a2b8ea6a20594b22a8b28bb28e689db93afeed5b286d7cec1c7e8a1ddc86d4eb10',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5freason_5fok_8',['DIRECT_CDN_STREAMING_REASON_OK',['../namespaceagora_1_1rtc.html#a2b8ea6a20594b22a8b28bb28e689db93a00f4654ac17cd5e47f6c43a3814c83ab',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5freason_5fvideo_5fpublication_9',['DIRECT_CDN_STREAMING_REASON_VIDEO_PUBLICATION',['../namespaceagora_1_1rtc.html#a2b8ea6a20594b22a8b28bb28e689db93ae7f151fe3192e422880a67fb92104fbd',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5fstate_5ffailed_10',['DIRECT_CDN_STREAMING_STATE_FAILED',['../namespaceagora_1_1rtc.html#a6fc39422ba17c9b4d3c8ec5461b5bea7a45e0700aac0977ac3a476028230fc8c2',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5fstate_5fidle_11',['DIRECT_CDN_STREAMING_STATE_IDLE',['../namespaceagora_1_1rtc.html#a6fc39422ba17c9b4d3c8ec5461b5bea7af988af039b991e4e0df3d31c8a158f55',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5fstate_5frecovering_12',['DIRECT_CDN_STREAMING_STATE_RECOVERING',['../namespaceagora_1_1rtc.html#a6fc39422ba17c9b4d3c8ec5461b5bea7a60bfdc82222aa804dfdb8848665c5964',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5fstate_5frunning_13',['DIRECT_CDN_STREAMING_STATE_RUNNING',['../namespaceagora_1_1rtc.html#a6fc39422ba17c9b4d3c8ec5461b5bea7a66c1742448b2ba6475f8ece394d30fe2',1,'agora::rtc']]],
+  ['direct_5fcdn_5fstreaming_5fstate_5fstopped_14',['DIRECT_CDN_STREAMING_STATE_STOPPED',['../namespaceagora_1_1rtc.html#a6fc39422ba17c9b4d3c8ec5461b5bea7a8f56e4223de084325156e2986e8b6030',1,'agora::rtc']]],
+  ['disable_5fsimulcast_5fstream_15',['DISABLE_SIMULCAST_STREAM',['../namespaceagora_1_1rtc.html#a0ec618f678ca12272679cbb93e01f3f4a22ac2a70a5a84d804f505a7db38ee093',1,'agora::rtc']]],
+  ['disabled_16',['DISABLED',['../namespaceagora_1_1rtc.html#ae02c6d4b2848c21a502e4c1643d85ef6aa25521590427b8206809787e033d2e5c',1,'agora::rtc']]],
+  ['downlink_5fnetwork_5finfo_5fupdate_17',['DOWNLINK_NETWORK_INFO_UPDATE',['../namespaceagora_1_1rtc.html#ae78dcf0b0e9e1b226c9710f8f6ba6f9fa8f23b9e7a5a2b1fd288312e4a7ca5dcc',1,'agora::rtc']]],
+  ['duplicate_18',['Duplicate',['../namespaceagora_1_1rtc.html#a57ca8a94bc5e777bdbc5951493c11ec9a33a21fa1ec4b412ad1b8547f917c4230',1,'agora::rtc']]],
+  ['dynamic_19',['Dynamic',['../namespaceagora_1_1rtc.html#a57ca8a94bc5e777bdbc5951493c11ec9a2a5d75fe5ed414d034526e196013c822',1,'agora::rtc']]]
+];

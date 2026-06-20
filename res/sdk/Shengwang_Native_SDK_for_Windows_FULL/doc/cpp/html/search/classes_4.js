@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['echotestconfiguration_0',['EchoTestConfiguration',['../structagora_1_1rtc_1_1_echo_test_configuration.html',1,'agora::rtc']]],
+  ['encodedaudioframeadvancedsettings_1',['EncodedAudioFrameAdvancedSettings',['../structagora_1_1rtc_1_1_encoded_audio_frame_advanced_settings.html',1,'agora::rtc']]],
+  ['encodedaudioframeinfo_2',['EncodedAudioFrameInfo',['../structagora_1_1rtc_1_1_encoded_audio_frame_info.html',1,'agora::rtc']]],
+  ['encodedvideoframeinfo_3',['EncodedVideoFrameInfo',['../structagora_1_1rtc_1_1_encoded_video_frame_info.html',1,'agora::rtc']]],
+  ['encryptionconfig_4',['EncryptionConfig',['../structagora_1_1rtc_1_1_encryption_config.html',1,'agora::rtc']]],
+  ['encryptionconfiginternal_5',['EncryptionConfigInternal',['../classagora_1_1rtc_1_1_encryption_config_internal.html',1,'agora::rtc']]],
+  ['extension_6',['Extension',['../structagora_1_1rtc_1_1video__packet__t_1_1_extension.html',1,'agora::rtc::video_packet_t']]],
+  ['extensioncontext_7',['ExtensionContext',['../structagora_1_1rtc_1_1_extension_context.html',1,'agora::rtc']]],
+  ['extensionencodedimage_8',['ExtensionEncodedImage',['../classagora_1_1rtc_1_1_extension_encoded_image.html',1,'agora::rtc']]],
+  ['extensioninfo_9',['ExtensionInfo',['../structagora_1_1rtc_1_1_extension_info.html',1,'agora::rtc']]],
+  ['extensioninterfaceversion_10',['ExtensionInterfaceVersion',['../structagora_1_1rtc_1_1_extension_interface_version.html',1,'agora::rtc']]],
+  ['extensioninterfaceversion_3c_20iaudiofilter_20_3e_11',['ExtensionInterfaceVersion&lt; IAudioFilter &gt;',['../structagora_1_1rtc_1_1_extension_interface_version_3_01_i_audio_filter_01_4.html',1,'agora::rtc']]],
+  ['extensioninterfaceversion_3c_20iaudiofilterv2_20_3e_12',['ExtensionInterfaceVersion&lt; IAudioFilterV2 &gt;',['../structagora_1_1rtc_1_1_extension_interface_version_3_01_i_audio_filter_v2_01_4.html',1,'agora::rtc']]],
+  ['extensioninterfaceversion_3c_20icustomextensionprovider_20_3e_13',['ExtensionInterfaceVersion&lt; ICustomExtensionProvider &gt;',['../structagora_1_1rtc_1_1_extension_interface_version_3_01_i_custom_extension_provider_01_4.html',1,'agora::rtc']]],
+  ['extensioninterfaceversion_3c_20iextensionprovider_20_3e_14',['ExtensionInterfaceVersion&lt; IExtensionProvider &gt;',['../structagora_1_1rtc_1_1_extension_interface_version_3_01_i_extension_provider_01_4.html',1,'agora::rtc']]],
+  ['extensioninterfaceversion_3c_20iextensionproviderv2_20_3e_15',['ExtensionInterfaceVersion&lt; IExtensionProviderV2 &gt;',['../structagora_1_1rtc_1_1_extension_interface_version_3_01_i_extension_provider_v2_01_4.html',1,'agora::rtc']]],
+  ['extensioninterfaceversion_3c_20iextensionvideofilter_20_3e_16',['ExtensionInterfaceVersion&lt; IExtensionVideoFilter &gt;',['../structagora_1_1rtc_1_1_extension_interface_version_3_01_i_extension_video_filter_01_4.html',1,'agora::rtc']]],
+  ['extensioninterfaceversion_3c_20iscreencapturesource_20_3e_17',['ExtensionInterfaceVersion&lt; IScreenCaptureSource &gt;',['../structagora_1_1rtc_1_1_extension_interface_version_3_01_i_screen_capture_source_01_4.html',1,'agora::rtc']]],
+  ['extensionmetainfo_18',['ExtensionMetaInfo',['../structagora_1_1rtc_1_1_i_extension_provider_1_1_extension_meta_info.html',1,'agora::rtc::IExtensionProvider']]],
+  ['extensionversion_19',['ExtensionVersion',['../structagora_1_1rtc_1_1_extension_version.html',1,'agora::rtc']]],
+  ['extensionvideocodecinfo_20',['ExtensionVideoCodecInfo',['../structagora_1_1rtc_1_1_i_extension_video_codec_provider_1_1_extension_video_codec_info.html',1,'agora::rtc::IExtensionVideoCodecProvider']]],
+  ['extensionvideocodecsettings_21',['ExtensionVideoCodecSettings',['../classagora_1_1rtc_1_1_extension_video_codec_settings.html',1,'agora::rtc']]],
+  ['externalvideoframe_22',['ExternalVideoFrame',['../structagora_1_1media_1_1base_1_1_external_video_frame.html',1,'agora::media::base']]],
+  ['extproviderdeleter_23',['ExtProviderDeleter',['../classagora_1_1rtc_1_1_ext_provider_deleter.html',1,'agora::rtc']]]
+];

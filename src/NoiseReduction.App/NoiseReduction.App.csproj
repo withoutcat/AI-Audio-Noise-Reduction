@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <PlatformTarget>x64</PlatformTarget>
+    <BridgeDir>$(MSBuildThisFileDirectory)..\NoiseReduction.Bridge\bin\</BridgeDir>
+    <SdkDir>$(MSBuildThisFileDirectory)..\..\res\sdk\Shengwang_Native_SDK_for_Windows_FULL\sdk\</SdkDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NoiseReduction.Core\NoiseReduction.Core.csproj" />
+    <ProjectReference Include="..\NoiseReduction.Infrastructure\NoiseReduction.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bridge DLL -->
+    <None Include="$(BridgeDir)NoiseReduction.Bridge.dll" CopyToOutputDirectory="PreserveNewest" />
+    <!-- SDK DLLs -->
+    <None Include="$(SdkDir)x86_64\*.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

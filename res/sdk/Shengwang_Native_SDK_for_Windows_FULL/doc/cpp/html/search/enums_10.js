@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['screen_5fcapture_5fframerate_5fcapability_0',['SCREEN_CAPTURE_FRAMERATE_CAPABILITY',['../namespaceagora_1_1rtc.html#a757b4ef9a2e5ca057c063848c3c1783d',1,'agora::rtc']]],
+  ['screen_5fcapturer_5fstate_1',['SCREEN_CAPTURER_STATE',['../classagora_1_1rtc_1_1_i_screen_capturer_ex.html#a5bdb58a60a784c17071a9d3b1666a178',1,'agora::rtc::IScreenCapturerEx']]],
+  ['screen_5fcolor_5ftype_2',['SCREEN_COLOR_TYPE',['../structagora_1_1rtc_1_1_segmentation_property.html#aee1fc194b52b0ff4fe45e6efa9377b41',1,'agora::rtc::SegmentationProperty']]],
+  ['screen_5fscenario_5ftype_3',['SCREEN_SCENARIO_TYPE',['../namespaceagora_1_1rtc.html#a8c57ab7df8f22207ce5a3c747141f0a9',1,'agora::rtc']]],
+  ['screen_5fsharing_5fmode_4',['SCREEN_SHARING_MODE',['../namespaceagora_1_1rtc.html#ae90e54d90a4c1c411ff70482e8a045b1',1,'agora::rtc']]],
+  ['screencapturesourcetype_5',['ScreenCaptureSourceType',['../namespaceagora_1_1rtc.html#abd40e8d6c6ce41eb69adfb7aca0761a7',1,'agora::rtc']]],
+  ['seg_5fmodel_5ftype_6',['SEG_MODEL_TYPE',['../structagora_1_1rtc_1_1_segmentation_property.html#a416344b41cefcd9fd44e744b20ada673',1,'agora::rtc::SegmentationProperty']]],
+  ['simulcast_5fstream_5fmode_7',['SIMULCAST_STREAM_MODE',['../namespaceagora_1_1rtc.html#a0ec618f678ca12272679cbb93e01f3f4',1,'agora::rtc']]],
+  ['stream_5ffallback_5foptions_8',['STREAM_FALLBACK_OPTIONS',['../namespaceagora_1_1rtc.html#acad77aef8f6fb19c0af3eac271f9e897',1,'agora::rtc']]],
+  ['stream_5fpublish_5fstate_9',['STREAM_PUBLISH_STATE',['../namespaceagora_1_1rtc.html#a58eeb8b495ca1c91d38785f064132537',1,'agora::rtc']]],
+  ['stream_5fsubscribe_5fstate_10',['STREAM_SUBSCRIBE_STATE',['../namespaceagora_1_1rtc.html#ac405a073458682fd6464c82d49fece3c',1,'agora::rtc']]],
+  ['streaming_5fsrc_5ferr_11',['STREAMING_SRC_ERR',['../namespaceagora_1_1rtc.html#a4fdd0c9e97b1eef1a905cecc3c74ad94',1,'agora::rtc']]],
+  ['streaming_5fsrc_5fstate_12',['STREAMING_SRC_STATE',['../namespaceagora_1_1rtc.html#ad65d5e993f6b9e5d3f3629bd8273ae66',1,'agora::rtc']]],
+  ['streamlayerindex_13',['StreamLayerIndex',['../structagora_1_1rtc_1_1_simulcast_config.html#a45100a882f028ec2a2b5e2020d83e1b9',1,'agora::rtc::SimulcastConfig']]],
+  ['streamlayerindexinternal_14',['StreamLayerIndexInternal',['../namespaceagora_1_1rtc.html#ac7c53aef1d848fde23b24e9c9e14a26d',1,'agora::rtc']]],
+  ['svc_15',['Svc',['../namespaceagora_1_1capability.html#a6db0ad0106d7151bda61cde1c90e3590',1,'agora::capability']]],
+  ['syncclienterror_16',['SyncClientError',['../namespaceagora_1_1base.html#acd604e884973bf0f4e3e3fc511ef745b',1,'agora::base']]],
+  ['synceventtype_17',['SyncEventType',['../namespaceagora_1_1base.html#ae4ce7eb5fc117376c98e069f997e04b1',1,'agora::base']]],
+  ['syncservice_18',['SyncService',['../namespaceagora_1_1capability.html#ac4962a13884ef8389fb163af3e17ca90',1,'agora::capability']]]
+];
