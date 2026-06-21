@@ -5,5 +5,11 @@
     <Application.Resources>
         <SolidColorBrush x:Key="AccentBrush" Color="#1F7A8C" />
         <SolidColorBrush x:Key="SurfaceBrush" Color="#F6F7F9" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!-- Global: show tooltips faster (200ms delay instead of default ~500ms) -->
+        <Style TargetType="FrameworkElement">
+            <Setter Property="ToolTipService.InitialShowDelay" Value="200" />
+        </Style>
     </Application.Resources>
 </Application>

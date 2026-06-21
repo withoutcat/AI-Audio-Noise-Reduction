@@ -23,8 +23,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     private readonly AppLogger _logger;
 
     private IntPtr _bridgeDll;
-    private IntPtr _fpInit;
-    private IntPtr _fpSetRecordingDevice;
+  private IntPtr _fpInit;
     private IntPtr _fpSetAINS;
     private IntPtr _fpJoin;
     private IntPtr _fpLeave;
@@ -35,8 +34,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     private IntPtr _fpFollowSystemDevice;
     private IntPtr _fpGetRecordingDevice;
 
-    private InitDelegate? _init;
-    private SetRecordingDeviceDelegate? _setRecordingDevice;
+  private InitDelegate? _init;
     private SetAINSDelegate? _setAINS;
     private JoinDelegate? _join;
     private LeaveDelegate? _leave;
@@ -55,8 +53,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     private AudioFrameCallback? _audioCallback;
 
     private long _totalFramesProcessed;
-    private long _totalBytesProcessed;
-    private int _callbackLogCount;
+  private long _totalBytesProcessed;
 
     public bool IsRunning { get; private set; }
     public long TotalFramesProcessed => _totalFramesProcessed;
@@ -95,7 +92,6 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         _bridgeDll = NativeLibrary.Load(bridgeDllPath);
 
         _fpInit = NativeLibrary.GetExport(_bridgeDll, "Bridge_Init");
-        _fpSetRecordingDevice = NativeLibrary.GetExport(_bridgeDll, "Bridge_SetRecordingDevice");
         _fpSetAINS = NativeLibrary.GetExport(_bridgeDll, "Bridge_SetAINSMode");
         _fpJoin = NativeLibrary.GetExport(_bridgeDll, "Bridge_JoinChannel");
         _fpLeave = NativeLibrary.GetExport(_bridgeDll, "Bridge_LeaveChannel");
@@ -104,7 +100,6 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         _fpRelease = NativeLibrary.GetExport(_bridgeDll, "Bridge_Release");
 
         _init = Marshal.GetDelegateForFunctionPointer<InitDelegate>(_fpInit);
-        _setRecordingDevice = Marshal.GetDelegateForFunctionPointer<SetRecordingDeviceDelegate>(_fpSetRecordingDevice);
         _setAINS = Marshal.GetDelegateForFunctionPointer<SetAINSDelegate>(_fpSetAINS);
         _join = Marshal.GetDelegateForFunctionPointer<JoinDelegate>(_fpJoin);
         _leave = Marshal.GetDelegateForFunctionPointer<LeaveDelegate>(_fpLeave);
@@ -255,7 +250,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
             ret = _setRecordingDeviceById(captureDeviceId);
             if (ret == 0)
             {
-                _logger.Info($"已确认麦克风: {_captureDevice.Name}");
+        _logger.Info($"当前降噪麦克风: {_captureDevice.Name}");
                 _followSystemDevice(false);
             }
         }
@@ -417,17 +412,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
 
         _bufferProvider?.AddSamples(outputPcm, 0, outputByteCount);
         _totalFramesProcessed++;
-        _totalBytesProcessed += inputByteCount;
-
-        // Log first callback: confirm SDK audio is flowing
-        if (_callbackLogCount < 1)
-        {
-            _callbackLogCount++;
-            bool hasAudio = false;
-            for (int j = 0; j < inputByteCount && !hasAudio; j++)
-                if (inputPcm[j] != 0) hasAudio = true;
-            _logger.Debug($"转换: {inputByteCount}B→{outputByteCount}B | SDK: {(hasAudio ? "有声" : "静音")}");
-        }
+    _totalBytesProcessed += inputByteCount;
     }
 
     /// <summary>
@@ -482,9 +467,6 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate IntPtr GetSdkVersionDelegate();
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate int SetRecordingDeviceDelegate([MarshalAs(UnmanagedType.LPStr)] string deviceId);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate int SetAINSDelegate(int enabled, int mode);

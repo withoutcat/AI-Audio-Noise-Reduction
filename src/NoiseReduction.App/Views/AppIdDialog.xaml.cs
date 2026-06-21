@@ -92,11 +92,6 @@ public partial class AppIdDialog : Window
         Close();
     }
 
-    private void OnCloseClick(object sender, RoutedEventArgs e)
-    {
-        DialogResult = true;
-        Close();
-    }
 }
 
 

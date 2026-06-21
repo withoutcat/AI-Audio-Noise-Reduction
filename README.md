@@ -1,60 +1,112 @@
 # AI Audio Noise Reduction
 
-Windows local AI noise-reduction tool PoC.
+Real-time AI-powered audio noise suppression for Windows.  
+Captures microphone audio, applies deep learning denoising via the Agora SDK, and outputs the cleaned audio through a virtual audio device — ready for use by any application (conference calls, games, browsers).
 
-## Current Scope
+![Tech Stack](https://img.shields.io/badge/.NET-10.0-512BD4)
+![Platform](https://img.shields.io/badge/Platform-Windows-0078D6)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-This repository is intentionally scoped to a first-phase PoC:
+---
 
-- Enumerate Windows recording/rendering devices.
-- Capture a selected physical microphone.
-- Render processed audio to a virtual audio cable input device.
-- Keep the denoise processor behind an interface so Agora SDK integration can be verified without rewriting the audio pipeline.
+## How It Works
 
-The first runnable implementation uses a pass-through denoise processor. Agora integration should only replace `IDenoiseProcessor` after SDK behavior is verified.
+```
+Microphone → Agora SDK (16kHz mono) → AI Denoiser → Format Conversion (48kHz stereo) → Virtual Cable → Any App
+```
 
-## Required Local Setup
+| Stage | Detail |
+|-------|--------|
+| **Capture** | Select any physical microphone from the UI |
+| **Denoising** | Agora AI Noise Suppression (3 modes: Balanced / Aggressive / Ultra-low-latency) |
+| **Conversion** | 16kHz mono → 48kHz stereo via sample repetition |
+| **Output** | Writes to VB-CABLE Input → CABLE Output becomes a clean "microphone" for other apps |
 
-Install a .NET SDK before building. The current PoC targets `net10.0-windows` because this machine has the .NET 10 SDK installed:
+## Features
 
-https://dotnet.microsoft.com/download
+- **Real-time** — sub-100ms latency AI denoising
+- **3 denoising levels** — Balanced (daily use), Aggressive (noisy environments), Ultra-low-latency (live scenarios)
+- **Hot-switch** — change microphone or denoising mode while running
+- **AppID management** — verify and persist Agora AppID via dialog
+- **Auto default mic switching** — optionally set CABLE Output as system default on start, restore on stop
+- **Persistence** — remembers last device, mode, and AppID in `config.json`
+- **Compact UI** — borderless window with custom title bar, draggable by any blank area
+- **Single instance** — Mutex-protected against duplicate launches
+- **Debug mode** — toggle to see detailed technical logs
 
-The first restore also needs NuGet access to download `NAudio`.
+## Prerequisites
 
-After installing:
+- Windows 10 / 11 (x64)
+- [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+- Visual Studio 2022+ with **Desktop development with C++** workload (to build the native Bridge DLL)
+- [VB-CABLE Virtual Audio Device](https://vb-audio.com/Cable/) — free virtual audio driver
+- A valid [Shengwang (Agora) AppID](https://console.shengwang.cn/) — free tier includes 10,000 minutes/month
+
+## Build & Run
 
 ```powershell
-dotnet restore .\src\NoiseReduction.App\NoiseReduction.App.csproj
-dotnet build .\src\NoiseReduction.App\NoiseReduction.App.csproj
-dotnet run --project .\src\NoiseReduction.App\NoiseReduction.App.csproj
+# 1. Build the native Bridge DLL
+cd src\NoiseReduction.Bridge
+.\build.bat
+
+# 2. Build the .NET app
+cd ..\..
+dotnet build src\NoiseReduction.App
+
+# 3. Run
+dotnet run --project src\NoiseReduction.App
 ```
 
-For virtual microphone routing, install either VB-CABLE or Virtual Audio Cable for PoC testing.
+> **Note**: The Bridge DLL depends on the Shengwang Native SDK (`res/sdk/`), which is vendored in this repo.
 
-## Implementation Notes
+## Project Structure
 
-- `NoiseReduction.Core` contains device, audio-frame, denoise, and pipeline contracts.
-- `NoiseReduction.Infrastructure` contains the first WASAPI/NAudio implementation.
-- `NoiseReduction.App` contains the WPF PoC UI.
-- The current processor is intentionally pass-through. Do not add Agora SDK until the local virtual-cable route is stable.
-- The first Agora milestone is a separate `IDenoiseProcessor` implementation that can prove before/after PCM capture.
-
-## Architecture
-
-```text
-Physical microphone
-  -> WASAPI capture
-  -> IDenoiseProcessor
-  -> WASAPI render to virtual cable input
-  -> Virtual microphone output
-  -> Downstream apps
+```
+src/
+├── NoiseReduction.Core/              # Interfaces & abstractions
+│   ├── Audio/                        #   AudioFrame, AudioFormatSpec
+│   ├── Devices/                      #   IAudioDeviceManager, AudioDeviceInfo
+│   ├── Logging/                      #   AppLogger (thread-safe)
+│   └── Pipeline/                     #   IAudioPipelineSession
+├── NoiseReduction.Infrastructure/    # Implementations
+│   ├── Devices/                      #   NaudioDeviceManager
+│   └── Pipeline/                     #   AgoraAinsPipelineSession (core)
+├── NoiseReduction.App/               # WPF UI (MVVM)
+│   ├── Services/                     #   AppConfig, AudioDeviceUtility, UiHelper
+│   ├── ViewModels/                   #   MainViewModel, RelayCommand
+│   └── Views/                        #   AppIdDialog
+└── NoiseReduction.Bridge/            # C++ → Agora SDK bridge (DLL)
+    ├── bridge.cpp
+    └── build.bat
 ```
 
-## First Validation Target
+## Configuration
 
-Use the app to select:
+All settings are stored in `config.json` next to the executable:
 
-- Input: physical microphone.
-- Output: virtual cable input/render device.
+```json
+{
+  "AppId": "your_agora_app_id",
+  "LastCaptureDeviceName": "Microphone (Realtek Audio)",
+  "LastAinsMode": 0,
+  "DebugMode": false,
+  "VirtualMicphoneName": "CABLE Output"
+}
+```
 
-Then select the matching virtual cable recording device in OBS, Discord, or Windows Sound Recorder.
+## Roadmap
+
+- [x] Core AI denoising pipeline
+- [x] AppID management & verification
+- [x] Hot-switch microphone / denoising mode
+- [x] Single instance, borderless window, drag support
+- [x] Default mic auto-switch (via COM PolicyConfig)
+- [ ] Custom virtual device naming (installer renames CABLE with unique suffix)
+- [ ] MSI/Installer package (bundles VB-CABLE driver)
+- [ ] Device name customization UI
+
+## Acknowledgments
+
+- [Agora / Shengwang RTC SDK](https://docs.agora.io/en/) — AI Noise Suppression engine
+- [NAudio](https://github.com/naudio/NAudio) — Audio device enumeration & playback
+- [VB-CABLE](https://vb-audio.com/Cable/) — Virtual audio driver
