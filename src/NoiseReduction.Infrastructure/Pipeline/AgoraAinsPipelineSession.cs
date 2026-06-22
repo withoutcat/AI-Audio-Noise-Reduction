@@ -338,36 +338,14 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
 
     private void OnAudioFrame(IntPtr buffer, int samplesPerChannel, int channels, int sampleRate, int bytesPerSample, IntPtr userData)
     {
-        // SDK gives us 16kHz mono PCM. Convert to output format (48kHz stereo) manually.
-        int inputByteCount = samplesPerChannel * channels * bytesPerSample;
-        var inputPcm = new byte[inputByteCount];
-        Marshal.Copy(buffer, inputPcm, 0, inputByteCount);
+        // SDK now delivers 48kHz stereo PCM directly — no conversion needed.
+        int byteCount = samplesPerChannel * channels * bytesPerSample;
+        var pcm = new byte[byteCount];
+        Marshal.Copy(buffer, pcm, 0, byteCount);
 
-        int sampleRatio = _outputWaveFormat.SampleRate / sampleRate;
-        int outputSamplesPerChannel = samplesPerChannel * sampleRatio;
-        int outputByteCount = outputSamplesPerChannel * _outputWaveFormat.Channels * (_outputWaveFormat.BitsPerSample / 8);
-        var outputPcm = new byte[outputByteCount];
-
-        for (int i = 0; i < samplesPerChannel; i++)
-        {
-            short s = BitConverter.ToInt16(inputPcm, i * 2);
-            // Repeat for output sample rate (3x for 16→48kHz)
-            for (int r = 0; r < sampleRatio; r++)
-            {
-                int frameBase = (i * sampleRatio + r) * _outputWaveFormat.Channels;
-                int byteBase = frameBase * 2;
-                for (int ch = 0; ch < _outputWaveFormat.Channels; ch++)
-                {
-                    int offset = byteBase + ch * 2;
-                    outputPcm[offset] = (byte)(s & 0xFF);
-                    outputPcm[offset + 1] = (byte)((s >> 8) & 0xFF);
-                }
-            }
-        }
-
-        _bufferProvider?.AddSamples(outputPcm, 0, outputByteCount);
+        _bufferProvider?.AddSamples(pcm, 0, byteCount);
         _totalFramesProcessed++;
-        _totalBytesProcessed += inputByteCount;
+        _totalBytesProcessed += byteCount;
     }
 
     /// <summary>
