@@ -173,57 +173,6 @@ __declspec(dllexport) int __cdecl Bridge_Init(const char* appId) {
     return 0;
 }
 
-// Set the recording (microphone) device by device ID
-// Call this after Bridge_Init, before Bridge_JoinChannel
-__declspec(dllexport) int __cdecl Bridge_SetRecordingDevice(const char* deviceId) {
-    if (!g_audioDeviceManager) {
-        printf("[Bridge] Audio device manager not available\n");
-        return -1;
-    }
-
-    printf("[Bridge] Setting recording device: %s\n", deviceId ? deviceId : "(null)");
-    int ret = g_audioDeviceManager->setRecordingDevice(deviceId);
-    printf("[Bridge] setRecordingDevice returned: %d\n", ret);
-    return ret;
-}
-
-// Manually load and enable the AI noise suppression extension
-// Call this after Bridge_Init if autoRegisterAgoraExtensions didn't work
-__declspec(dllexport) int __cdecl Bridge_LoadExtension(const char* dllDir) {
-    if (!g_engine) {
-        printf("[Bridge] Engine not initialized\n");
-        return -1;
-    }
-
-    const char* provider = "agora.io";
-    const char* extension = "agora_custom_ains";
-
-    // Build full path to extension DLL
-    char extPath[512];
-    snprintf(extPath, sizeof(extPath), "%s\\libagora_ai_noise_suppression_extension.dll",
-             dllDir ? dllDir : ".");
-
-    printf("[Bridge] Loading extension: %s / %s\n", provider, extension);
-    printf("[Bridge] Extension DLL path: %s\n", extPath);
-
-    // Step 1: Load extension provider (needs full path)
-    int ret = g_engine->loadExtensionProvider(extPath, false);
-    printf("[Bridge] loadExtensionProvider: %d\n", ret);
-    // Note: -7 means already loaded, which is OK
-
-    // Step 2: Try register extension (may fail if auto-registered)
-    ret = g_engine->registerExtension(provider, extension, agora::media::AUDIO_RECORDING_SOURCE);
-    printf("[Bridge] registerExtension: %d (0=ok, -3=already loaded by autoRegister)\n", ret);
-
-    // Step 3: Enable extension (auto-registers if not already registered)
-    ExtensionInfo extInfo;
-    memset(&extInfo, 0, sizeof(extInfo));
-    ret = g_engine->enableExtension(provider, extension, extInfo, true);
-    printf("[Bridge] enableExtension: %d\n", ret);
-
-    return ret;
-}
-
 // Enable/disable AI noise suppression
 // enabled: 1=on, 0=off
 // mode: 0=balanced, 1=aggressive, 2=ultralowlatency
@@ -287,13 +236,7 @@ __declspec(dllexport) int __cdecl Bridge_RegisterAudioObserver() {
     return ret;
 }
 
-// Set recording audio frame parameters (alternative way to set format)
-__declspec(dllexport) int __cdecl Bridge_SetRecordingAudioFrameParameters(int sampleRate, int channel, int mode, int samplesPerCall) {
-    if (!g_engine) return -1;
-    return g_engine->setRecordingAudioFrameParameters(sampleRate, channel, (RAW_AUDIO_FRAME_OP_MODE_TYPE)mode, samplesPerCall);
-}
-
-// Release the engine and clean up
+// Release the engine
 __declspec(dllexport) void __cdecl Bridge_Release() {
     printf("[Bridge] Releasing engine\n");
     if (g_mediaEngine) {

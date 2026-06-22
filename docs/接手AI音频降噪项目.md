@@ -3,7 +3,7 @@
 ## 项目概述
 
 Windows 桌面应用，通过**声网（Agora/Shengwang）SDK** 实现实时 AI 音频降噪。
-物理麦克风采集的音频经 AI 降噪后，通过虚拟音频设备（VB-CABLE）输出，
+物理麦克风采集的音频经声网SDK降噪后，通过虚拟音频设备（VB-CABLE）输出，
 供其他应用程序（腾讯会议、游戏、浏览器等）作为麦克风输入使用。
 
 **技术栈**：C# / .NET 10 / WPF / NAudio / C++（桥接 DLL）
@@ -178,6 +178,13 @@ LogLevel Verbose → Info → Debug
 
 `OnLogEntryAdded()` 在 ViewModel 中根据 `_debugMode` 过滤。
 每 2 秒 `CheckDefaultDevice()` 检测默认麦克风是否改变。
+
+---
+## 官网文档
+
+官网浏览API文档需要链接跳转，如果AI无法自主跳转链接遍历所有链接的话，可以提出要求，由人类帮忙给出链接地址
+
+https://doc.shengwang.cn/api-ref/rtc/windows/API/rtc_api_overview
 
 ---
 

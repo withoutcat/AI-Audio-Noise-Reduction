@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
-using NoiseReduction.Core.Audio;
 using NoiseReduction.Core.Devices;
 using NoiseReduction.Core.Logging;
 using NoiseReduction.Core.Pipeline;
@@ -23,7 +22,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     private readonly AppLogger _logger;
 
     private IntPtr _bridgeDll;
-  private IntPtr _fpInit;
+    private IntPtr _fpInit;
     private IntPtr _fpSetAINS;
     private IntPtr _fpJoin;
     private IntPtr _fpLeave;
@@ -34,7 +33,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     private IntPtr _fpFollowSystemDevice;
     private IntPtr _fpGetRecordingDevice;
 
-  private InitDelegate? _init;
+    private InitDelegate? _init;
     private SetAINSDelegate? _setAINS;
     private JoinDelegate? _join;
     private LeaveDelegate? _leave;
@@ -53,13 +52,11 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     private AudioFrameCallback? _audioCallback;
 
     private long _totalFramesProcessed;
-  private long _totalBytesProcessed;
+    private long _totalBytesProcessed;
 
     public bool IsRunning { get; private set; }
     public long TotalFramesProcessed => _totalFramesProcessed;
     public long TotalBytesCaptured => _totalBytesProcessed;
-
-    public AudioFormatSpec Format { get; } = AudioFormatSpec.DefaultSpeech;
 
     public AgoraAinsPipelineSession(
         string appId,
@@ -237,23 +234,8 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         ret = _join(null, ChannelName, 0);
         if (ret != 0) throw new InvalidOperationException($"重新加入频道失败: {ret}");
 
-        // Final verification
-        Array.Clear(devBuf, 0, devBuf.Length);
-        ret = _getRecordingDevice(devBuf, devBuf.Length);
-        if (ret == 0)
-        {
-            string finalDev = System.Text.Encoding.UTF8.GetString(devBuf).TrimEnd('\0');
-            _logger.Debug($"重连后SDK录音设备: {finalDev}");
-        }
-        if (_captureDevice != null && captureDeviceId != null)
-        {
-            ret = _setRecordingDeviceById(captureDeviceId);
-            if (ret == 0)
-            {
-        _logger.Info($"当前降噪麦克风: {_captureDevice.Name}");
-                _followSystemDevice(false);
-            }
-        }
+        if (_captureDevice != null)
+            _logger.Info($"当前降噪麦克风: {_captureDevice.Name}");
 
         // Enable AI降噪 (re-enabled now that raw audio capture works)
         var modeName = _ainsMode switch
@@ -266,11 +248,11 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         ret = _setAINS(1, _ainsMode);
         if (ret != 0) _logger.Verbose($"降噪设置返回: {ret}");
 
-         // Start output
-         _wasapiOut?.Play();
-         _waveOutEvent?.Play();
-         IsRunning = true;
-         _logger.Info($"AI降噪已开启（{modeName}模式）");
+        // Start output
+        _wasapiOut?.Play();
+        _waveOutEvent?.Play();
+        IsRunning = true;
+        _logger.Info($"AI降噪已开启（{modeName}模式）");
     }
 
     public void Stop()
@@ -412,7 +394,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
 
         _bufferProvider?.AddSamples(outputPcm, 0, outputByteCount);
         _totalFramesProcessed++;
-    _totalBytesProcessed += inputByteCount;
+        _totalBytesProcessed += inputByteCount;
     }
 
     /// <summary>

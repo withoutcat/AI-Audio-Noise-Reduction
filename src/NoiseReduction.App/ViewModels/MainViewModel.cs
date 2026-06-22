@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Threading;
 using NAudio.CoreAudioApi;
 using NoiseReduction.App.Services;
-using NoiseReduction.Core.Audio;
 using NoiseReduction.Core.Devices;
 using NoiseReduction.Core.Logging;
 using NoiseReduction.Core.Pipeline;
@@ -28,7 +27,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _debugMode;
     private string _statusMessage = "选择麦克风，然后点击开始。";
     private string _appId = "";
-  private string? _originalDefaultMicId;
+    private string? _originalDefaultMicId;
     private double _cpuUsage;
     private long _memoryUsageMB;
     private TimeSpan _lastCpuTime;
@@ -84,7 +83,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 {
                     session.ChangeCaptureDevice(value);
                 }
-        OnPropertyChanged(nameof(StartButtonTooltip));
+                OnPropertyChanged(nameof(StartButtonTooltip));
                 ToggleCommand.RaiseCanExecuteChanged();
             }
         }
@@ -164,24 +163,24 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-  public bool ShowDeviceWarning { get; private set; }
+    public bool ShowDeviceWarning { get; private set; }
 
-  public string VirtualMicphoneName => _config.VirtualMicphoneName;
+    public string VirtualMicphoneName => _config.VirtualMicphoneName;
 
-  public string StartButtonTooltip
-  {
-    get
+    public string StartButtonTooltip
     {
-      if (_isActive) return "停止AI降噪服务，释放系统资源";
-      if (!HasAppId) return "请先配置并验证 AppID";
-      if (SelectedCaptureDevice is null) return "请先选择需降噪的麦克风";
-      return "初始化并开启AI降噪服务";
+        get
+        {
+            if (_isActive) return "停止AI降噪服务，释放系统资源";
+            if (!HasAppId) return "请先配置并验证 AppID";
+            if (SelectedCaptureDevice is null) return "请先选择需降噪的麦克风";
+            return "初始化并开启AI降噪服务";
+        }
     }
-  }
 
-  public string DeviceWarningText => $"⚠ 建议将 {_config.VirtualMicphoneName} 设为默认麦克风";
+    public string DeviceWarningText => $"⚠ 建议将 {_config.VirtualMicphoneName} 设为默认麦克风";
 
-  public string ResourceText
+    public string ResourceText
     {
         get
         {
@@ -205,8 +204,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             if (dialog.VerifiedAppId == "")
             {
-        // User clicked "解除" — stop session first, then clear AppID
-        if (_isActive) Stop();
+                // User clicked "解除" — stop session first, then clear AppID
+                if (_isActive) Stop();
                 AppId = "";
                 _logger.Info("AppID 已解除");
             }
@@ -253,10 +252,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             // Apply saved debug mode
             OnPropertyChanged(nameof(DebugMode));
 
-      // Check if virtual device (CABLE Output) is the system default recording device
-      CheckDefaultDevice();
+            // Check if virtual device (CABLE Output) is the system default recording device
+            CheckDefaultDevice();
 
-      StatusMessage = $"发现 {CaptureDevices.Count} 个麦克风。";
+            StatusMessage = $"发现 {CaptureDevices.Count} 个麦克风。";
         }
         catch (Exception ex)
         {
@@ -268,27 +267,27 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-  private void CheckDefaultDevice()
-  {
-    try
+    private void CheckDefaultDevice()
     {
-      using var enumerator = new MMDeviceEnumerator();
-      var defaultMic = enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Console);
-      var isDefault = defaultMic.FriendlyName.StartsWith(_config.VirtualMicphoneName, StringComparison.OrdinalIgnoreCase);
-      if (ShowDeviceWarning != !isDefault)
-      {
-        ShowDeviceWarning = !isDefault;
-        OnPropertyChanged(nameof(ShowDeviceWarning));
-      }
+        try
+        {
+            using var enumerator = new MMDeviceEnumerator();
+            var defaultMic = enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Console);
+            var isDefault = defaultMic.FriendlyName.StartsWith(_config.VirtualMicphoneName, StringComparison.OrdinalIgnoreCase);
+            if (ShowDeviceWarning != !isDefault)
+            {
+                ShowDeviceWarning = !isDefault;
+                OnPropertyChanged(nameof(ShowDeviceWarning));
+            }
+        }
+        catch
+        {
+            ShowDeviceWarning = true;
+            OnPropertyChanged(nameof(ShowDeviceWarning));
+        }
     }
-    catch
-    {
-      ShowDeviceWarning = true;
-      OnPropertyChanged(nameof(ShowDeviceWarning));
-    }
-  }
 
-  private async void Toggle()
+    private async void Toggle()
     {
         if (_isActive)
         {
@@ -362,23 +361,23 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
             _logger.Verbose($"匹配到渲染设备: {renderDevice.Name}");
 
-      // Save and attempt to switch default recording device
-      _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
-      if (_originalDefaultMicId != null)
-      {
-        var switched = AudioDeviceUtility.TrySetDefaultCaptureDevice(cableOutput.Id);
-        if (switched)
-          _logger.Info($"已将默认麦克风切换为: {cableOutput.Name}");
-        else
-          _logger.Info("无法自动切换默认麦克风（系统限制），用户可在声音设置中手动选择");
-      }
-      else
-      {
-        _logger.Info("无法读取当前默认麦克风，跳过自动切换");
-      }
+            // Save and attempt to switch default recording device
+            _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
+            if (_originalDefaultMicId != null)
+            {
+                var switched = AudioDeviceUtility.TrySetDefaultCaptureDevice(cableOutput.Id);
+                if (switched)
+                    _logger.Info($"已将默认麦克风切换为: {cableOutput.Name}");
+                else
+                    _logger.Info("无法自动切换默认麦克风（系统限制），用户可在声音设置中手动选择");
+            }
+            else
+            {
+                _logger.Info("无法读取当前默认麦克风，跳过自动切换");
+            }
 
-      // Create session and immediately update UI
-      _session = new AgoraAinsPipelineSession(
+            // Create session and immediately update UI
+            _session = new AgoraAinsPipelineSession(
                 _appId,
                 SelectedCaptureDevice,
                 renderDevice,
@@ -426,25 +425,25 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _memoryUsageMB = 0;
         _lastCpuCheck = default;
 
-    // Restore original default microphone
-    if (_originalDefaultMicId != null)
-    {
-      AudioDeviceUtility.TrySetDefaultCaptureDevice(_originalDefaultMicId);
-      _originalDefaultMicId = null;
-    }
+        // Restore original default microphone
+        if (_originalDefaultMicId != null)
+        {
+            AudioDeviceUtility.TrySetDefaultCaptureDevice(_originalDefaultMicId);
+            _originalDefaultMicId = null;
+        }
 
-    StatusMessage = "降噪已停止";
+        StatusMessage = "降噪已停止";
         RaiseStateChanged();
     }
 
-  private int _deviceCheckTick;
+    private int _deviceCheckTick;
 
-  private void OnStatsTimerTick(object? sender, EventArgs e)
+    private void OnStatsTimerTick(object? sender, EventArgs e)
     {
         OnPropertyChanged(nameof(ResourceText));
-    // Re-check default audio device every ~2 seconds
-    if (++_deviceCheckTick % 4 == 0)
-      CheckDefaultDevice();
+        // Re-check default audio device every ~2 seconds
+        if (++_deviceCheckTick % 4 == 0)
+            CheckDefaultDevice();
     }
 
     private void OnLogEntryAdded(object? sender, LogEntry entry)
@@ -502,9 +501,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(ResourceText));
         OnPropertyChanged(nameof(DebugMode));
         OnPropertyChanged(nameof(ConnectivityText));
-    OnPropertyChanged(nameof(ShowDeviceWarning));
-    OnPropertyChanged(nameof(VirtualMicphoneName));
-    OnPropertyChanged(nameof(StartButtonTooltip));
+        OnPropertyChanged(nameof(ShowDeviceWarning));
+        OnPropertyChanged(nameof(VirtualMicphoneName));
+        OnPropertyChanged(nameof(StartButtonTooltip));
         ToggleCommand.RaiseCanExecuteChanged();
     }
 

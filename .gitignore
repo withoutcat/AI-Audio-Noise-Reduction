@@ -15,6 +15,7 @@ res/sdk/**/doc/
 res/sdk/**/.commits
 
 # IDE / OS
+.qoder
 .vs/
 .vscode/
 .idea/
