@@ -120,57 +120,58 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         _logger.Verbose($"设备格式: {deviceFormat.SampleRate}Hz, {deviceFormat.Channels}ch");
 
         // Create a BufferedWaveProvider at the device's native output format (48kHz stereo)
-        // SDK gives us 16kHz mono PCM in callbacks; we manually convert in OnAudioFrame
+        // SDK delivers 48kHz stereo PCM directly via callback
         _outputWaveFormat = new WaveFormat(deviceFormat.SampleRate, 16, deviceFormat.Channels);
         _bufferProvider = new BufferedWaveProvider(_outputWaveFormat)
         {
-            BufferDuration = TimeSpan.FromMilliseconds(500),
+            BufferDuration = TimeSpan.FromMilliseconds(200),
             DiscardOnBufferOverflow = true
         };
 
-        // Strategy: Try WaveOutEvent first for VB-CABLE (MME/Wave API works better with virtual devices)
-        // Fallback to WasapiOut if WaveOut doesn't find the CABLE device
+        // Strategy: Try WASAPI first (modern, lower latency, event-driven)
+        // Fallback to WaveOutEvent if WASAPI fails with the virtual device
 
-        // Try WaveOutEvent - find CABLE device
-        int waveOutDeviceNum = -1;
-        for (int i = 0; i < WaveOut.DeviceCount; i++)
+        bool wasapiOk = false;
+        try
         {
-            var caps = WaveOut.GetCapabilities(i);
-            _logger.Verbose($"WaveOut设备 #{i}: {caps.ProductName}");
-            if (caps.ProductName.Contains("CABLE", StringComparison.OrdinalIgnoreCase))
-            {
-                waveOutDeviceNum = i;
-                break;
-            }
+            _wasapiOut = new WasapiOut(renderDevice, AudioClientShareMode.Shared, false, 50);
+            _wasapiOut.Init(_bufferProvider);
+            wasapiOk = true;
+            _logger.Info("音频输出: WASAPI 共享模式");
+        }
+        catch (Exception exWasapi)
+        {
+            _logger.Verbose($"WASAPI 初始化失败: {exWasapi.Message}, 尝试 WaveOut");
+            _wasapiOut?.Dispose();
+            _wasapiOut = null;
         }
 
-        if (waveOutDeviceNum >= 0)
+        if (!wasapiOk)
         {
-            var waveOut = new WaveOutEvent();
-            waveOut.DeviceNumber = waveOutDeviceNum;
-            waveOut.Init(_bufferProvider);
-            _waveOutEvent = waveOut;
-            _logger.Info("音频输出: WaveOut");
-        }
-        else
-        {
-            // WaveOut didn't find CABLE, try WasapiOut (exclusive → shared)
-            _logger.Verbose("WaveOut 未找到 CABLE 设备，尝试 WASAPI");
-            try
+            // Fallback: WaveOut (MME) — more compatible with older virtual devices
+            int waveOutDeviceNum = -1;
+            for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
-                _wasapiOut = new WasapiOut(renderDevice, AudioClientShareMode.Exclusive, false, 100);
-                _wasapiOut.Init(_bufferProvider);
-                _logger.Info("音频输出: WASAPI 独占模式");
+                var caps = WaveOut.GetCapabilities(i);
+                _logger.Verbose($"WaveOut设备 #{i}: {caps.ProductName}");
+                if (caps.ProductName.Contains("CABLE", StringComparison.OrdinalIgnoreCase))
+                {
+                    waveOutDeviceNum = i;
+                    break;
+                }
             }
-            catch (Exception exExclusive)
-            {
-                _logger.Verbose($"WASAPI 独占模式失败: {exExclusive.Message}, 尝试共享模式");
-                _wasapiOut?.Dispose();
-                _wasapiOut = null;
 
-                _wasapiOut = new WasapiOut(renderDevice, AudioClientShareMode.Shared, false, 100);
-                _wasapiOut.Init(_bufferProvider);
-                _logger.Info("音频输出: WASAPI 共享模式");
+            if (waveOutDeviceNum >= 0)
+            {
+                var waveOut = new WaveOutEvent();
+                waveOut.DeviceNumber = waveOutDeviceNum;
+                waveOut.Init(_bufferProvider);
+                _waveOutEvent = waveOut;
+                _logger.Info("音频输出: WaveOut");
+            }
+            else
+            {
+                throw new InvalidOperationException("无法初始化音频输出：WASAPI 和 WaveOut 均失败");
             }
         }
 
