@@ -189,50 +189,23 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         ret = _registerObserver();
         if (ret != 0) throw new InvalidOperationException($"注册音频观察者失败: {ret}");
 
-        // First join to initialize the audio module/SSP
-        _logger.Info("正在初始化音频模块...");
-        ret = _join(null, ChannelName, 0);
-        if (ret != 0) throw new InvalidOperationException($"首次加入频道失败: {ret}");
-
-        // Leave, set device, then rejoin with our selected device
-        _leave();
-        Thread.Sleep(100); // Brief pause to let audio module settle
-
-        // Log current device before we change it
-        var devBuf = new byte[512];
-        ret = _getRecordingDevice(devBuf, devBuf.Length);
-        if (ret == 0)
-        {
-            string curDev = System.Text.Encoding.UTF8.GetString(devBuf).TrimEnd('\0');
-            _logger.Debug($"当前SDK录音设备: {curDev}");
-        }
-
         // Set recording device AND disable system default following
-        string? captureDeviceId = null;
         if (_captureDevice != null)
         {
-            captureDeviceId = FindAgoraDeviceId(_captureDevice.Name);
+            var captureDeviceId = FindAgoraDeviceId(_captureDevice.Name);
             if (captureDeviceId != null)
             {
                 ret = _setRecordingDeviceById(captureDeviceId);
                 _logger.Verbose($"设置麦克风: {_captureDevice.Name} (返回: {ret})");
                 _followSystemDevice(false);
                 _logger.Verbose("已禁止跟随系统默认设备");
-
-                // Verify device after setting
-                Array.Clear(devBuf, 0, devBuf.Length);
-                ret = _getRecordingDevice(devBuf, devBuf.Length);
-                if (ret == 0)
-                {
-                    string afterSet = System.Text.Encoding.UTF8.GetString(devBuf).TrimEnd('\0');
-                    _logger.Debug($"设置后SDK录音设备: {afterSet}");
-                }
             }
         }
 
-        // Rejoin channel - should now use our selected device
+        // Join channel with our selected device
+        _logger.Info("正在加入频道...");
         ret = _join(null, ChannelName, 0);
-        if (ret != 0) throw new InvalidOperationException($"重新加入频道失败: {ret}");
+        if (ret != 0) throw new InvalidOperationException($"加入频道失败: {ret}");
 
         if (_captureDevice != null)
             _logger.Info($"当前降噪麦克风: {_captureDevice.Name}");
