@@ -1,9 +1,17 @@
 # .NET build outputs (DLLs, EXEs, PDBs, etc.)
 src/**/bin/
 src/**/obj/
+installer/**/bin/
+installer/**/obj/
+installer/output
+publish-output/
 
 # NuGet local cache
 .nuget/
+
+# VB-CABLE driver binary (not source, ~30MB)
+res/VBCABLE_Driver_Pack45/
+res/VBCABLE_Driver_Pack45.zip
 
 # Legacy PoC project (only compiled outputs, no source)
 src/NoiseReduction.SdkPoC/
@@ -25,6 +33,9 @@ res/sdk/**/.commits
 *.sln.docstates
 Thumbs.db
 .DS_Store
+*.bak
+*.orig
+*.log
 
 # Unrelated root files (from other projects)
 verify_dashscope_qwen.js

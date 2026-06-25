@@ -1,0 +1,136 @@
+# release.yml
+# Build and release the AI Noise Reduction installer.
+# Runs on windows-latest (needed for WPF app + Inno Setup).
+#
+# Triggers:
+#   - Push tag v*.*.*   (build + publish release)
+#   - workflow_dispatch  (manual build, upload artifact only)
+
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version string (e.g. 1.0.1)"
+        required: true
+        type: string
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  CONFIGURATION: Release
+  RID: win-x64
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      # ---------------------------------------------------------------
+      # Step 1: Build Bridge C++ DLL
+      # ---------------------------------------------------------------
+      - name: Build Bridge DLL
+        run: |
+          echo "Building Bridge C++ DLL..."
+          cd src\NoiseReduction.Bridge
+          call build.bat
+        shell: cmd
+
+      # ---------------------------------------------------------------
+      # Step 2: Publish App
+      # ---------------------------------------------------------------
+      - name: Publish App
+        run: |
+          dotnet publish src\NoiseReduction.App\NoiseReduction.App.csproj `
+            -c ${{ env.CONFIGURATION }} `
+            -r ${{ env.RID }} `
+            --self-contained false `
+            --nologo
+
+      - name: Verify App publish output
+        run: |
+          $dir = "src\NoiseReduction.App\bin\${{ env.CONFIGURATION }}\net10.0-windows\${{ env.RID }}\publish"
+          if (-not (Test-Path $dir)) { throw "App publish directory not found: $dir" }
+          $count = (Get-ChildItem $dir -File).Count
+          echo "App published: $count files"
+        shell: pwsh
+
+      # ---------------------------------------------------------------
+      # Step 3: Publish InstallerHelper
+      # ---------------------------------------------------------------
+      - name: Publish InstallerHelper
+        run: |
+          dotnet publish installer\NoiseReduction.InstallerHelper\NoiseReduction.InstallerHelper.csproj `
+            -c ${{ env.CONFIGURATION }} `
+            -r ${{ env.RID }} `
+            --self-contained false `
+            --nologo
+
+      - name: Verify Helper publish output
+        run: |
+          $dir = "installer\NoiseReduction.InstallerHelper\bin\${{ env.CONFIGURATION }}\net10.0-windows\${{ env.RID }}\publish"
+          if (-not (Test-Path $dir)) { throw "Helper publish directory not found: $dir" }
+          $count = (Get-ChildItem $dir -File).Count
+          echo "Helper published: $count files"
+        shell: pwsh
+
+      # ---------------------------------------------------------------
+      # Step 4: Compile Inno Setup installer
+      # ---------------------------------------------------------------
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+        shell: cmd
+
+      - name: Compile installer
+        run: |
+          cd installer
+          ISCC setup.iss
+        shell: cmd
+
+      - name: Verify installer output
+        run: |
+          $files = Get-ChildItem "installer\output" -Filter "*.exe"
+          if (-not $files) { throw "No installer EXE found in installer\output" }
+          foreach ($f in $files) {
+            echo "Installer: $($f.Name) ($($f.Length / 1MB) MB)"
+          }
+        shell: pwsh
+
+      # ---------------------------------------------------------------
+      # Step 5: Upload artifact
+      # ---------------------------------------------------------------
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Noise-Reduction-Setup
+          path: installer\output\*.exe
+          if-no-files-found: error
+
+      # ---------------------------------------------------------------
+      # Step 6: Create GitHub Release (only when triggered by tag)
+      # ---------------------------------------------------------------
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "AI Noise Reduction ${{ github.ref_name }}"
+          body: "Auto-built installer for ${{ github.ref_name }}."
+          files: installer\output\*.exe
+          draft: true
+          prerelease: false

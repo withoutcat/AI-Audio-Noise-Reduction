@@ -80,7 +80,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         _logger.Info("正在加载桥接库...");
 
         // Load bridge DLL
-        var bridgeDllPath = Path.Combine(AppContext.BaseDirectory, "NoiseReduction.Bridge.dll");
+        var bridgeDllPath = Path.Combine(AppContext.BaseDirectory, "native", "Bridge.dll");
         if (!File.Exists(bridgeDllPath))
         {
             throw new FileNotFoundException("Bridge DLL not found", bridgeDllPath);
@@ -355,7 +355,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     /// </summary>
     public static (bool IsValid, string SdkVersion, string ErrorMessage) VerifyAppId(string appId)
     {
-        var bridgeDllPath = Path.Combine(AppContext.BaseDirectory, "NoiseReduction.Bridge.dll");
+        var bridgeDllPath = Path.Combine(AppContext.BaseDirectory, "native", "Bridge.dll");
         if (!File.Exists(bridgeDllPath))
             return (false, "", $"Bridge DLL not found: {bridgeDllPath}");
 

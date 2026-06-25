@@ -16,20 +16,17 @@ Windows 桌面应用，通过**声网（Agora/Shengwang）SDK** 实现实时 AI 
 物理麦克风
     ↓
 声网 SDK 采集（通过 setRecordingDeviceById 指定设备）
-    ↓ 16kHz mono PCM
+    ↓
 声网 AI 降噪引擎（setAINSMode）
-    ↓ 16kHz mono PCM（降噪后）
+    ↓ 48kHz stereo PCM（降噪后，960 samples/channel）
 onRecordAudioFrame 回调（C++ → C# 互调）
     ↓
-OnAudioFrame() 手动升采样 + 声道复制
-  ┌ 输入: 16kHz mono, 1024 samples/frame, 16-bit PCM
-  ├ 输出: 48kHz stereo, 3072 samples/frame, 16-bit PCM
-  ├ 方式: sample repetition (每个 sample 复制 3 次)
-  └ 声道: mono→stereo (2ch，数据相同)
+OnAudioFrame() 直接写入 BufferedWaveProvider
+  ┌ SDK 已输出 48kHz stereo PCM，C# 端只做内存拷贝，无需升采样/声道复制
     ↓
-BufferedWaveProvider（延迟 500ms）
+BufferedWaveProvider（延迟 200ms）
     ↓
-WaveOutEvent / WasapiOut
+WasapiOut（优先级高） / WaveOutEvent（降级）
     ↓
 CABLE Input（VB-CABLE 虚拟设备）
     ↓
@@ -40,11 +37,11 @@ CABLE Output → 其他应用（作为麦克风输入）
 
 | 参数 | 值 |
 |------|-----|
-| SDK 输出格式 | 16kHz, mono, 16-bit PCM |
-| 输出格式 | 48kHz, stereo, 16-bit PCM |
-| 升采样比 | 3x（16→48kHz） |
-| 帧大小 | 1024 samples（SDK）→ 3072 samples（输出） |
-| Buffer 延迟 | 500ms |
+| SDK 回调输出格式 | 48kHz, stereo, 16-bit PCM（由 C++ `getRecordAudioParams` 设置） |
+| 回调帧大小 | 960 samples/channel（20ms @48kHz） |
+| C# 输出格式 | 48kHz, stereo, 16-bit PCM（与 SDK 输出一致，无需转换） |
+| Buffer 延迟 | 200ms（BufferedWaveProvider） |
+| 音频输出策略 | WASAPI 共享模式（优先）→ WaveOut MME（降级） |
 | AI 降噪模式 | 均衡(0) / 强力(1) / 超低延迟(2) |
 
 ---
@@ -58,7 +55,7 @@ AI-audio-noise-reduction/
 ├── Directory.Build.props          # 通用 MSBuild 属性
 ├── NuGet.Config
 ├── docs/
-│   └── poc/phase-1-poc.md
+│   └── 接手AI音频降噪项目.md   ← 本文档
 ├── tools/
 │   └── check_exports.ps1          # 检查 Bridge DLL 导出函数
 ├── res/sdk/Shengwang_Native_SDK_for_Windows_FULL/
@@ -116,13 +113,13 @@ AI-audio-noise-reduction/
 **Start() 流程**：
 1. 加载 `NoiseReduction.Bridge.dll`
 2. 解析所有 C 函数指针（Init / Join / Leave / SetAINS / RegisterObserver 等）
-3. NAudio WaveOut 初始化（优先 WaveOutEvent，失败降级 WasapiOut）
+3. NAudio 音频输出初始化（优先 WasapiOut 共享模式，失败降级 WaveOutEvent）
 4. 声网 SDK 初始化
-5. Join（初始化音频模块 SSP）→ Leave → SetRecordingDeviceById → 再 Join
+5. 设置采集设备（SetRecordingDeviceById + FollowSystemDevice(false)，避免 SDK 自动切回系统默认设备）→ JoinChannel（SSP 音频模块开始工作）
 6. 启用 AI 降噪（setAINSMode）
 7. 启动音频输出
 
-**回调处理**：`OnAudioFrame()` 由 SDK 每帧调用，执行 PCM 格式转换 + 写入 BufferedWaveProvider。
+**回调处理**：`OnAudioFrame()` 由 C++ `onRecordAudioFrame` 每帧调用（48kHz stereo PCM），C# 端 `Marshal.Copy` 直接写入 `BufferedWaveProvider`，无需格式转换。
 
 **运行时切换**：
 - `SetAinsMode(int mode)` — 运行时切换降噪等级
@@ -171,12 +168,16 @@ AI-audio-noise-reduction/
 
 ### 日志系统
 
-```
-LogLevel Verbose → Info → Debug
-         ↑调试模式    ↑始终显示   ↑调试模式
-```
+日志级别（`AppLogger.LogLevel`）：Verbose / Info / Debug 三级。
 
-`OnLogEntryAdded()` 在 ViewModel 中根据 `_debugMode` 过滤。
+显示策略：
+| 级别 | 显示条件 |
+|------|---------|
+| Info | 始终显示 |
+| Verbose | 仅调试模式（DebugMode）显示 |
+| Debug | 仅调试模式（DebugMode）显示 |
+
+`OnLogEntryAdded()` 在 ViewModel 中根据上述规则过滤。
 每 2 秒 `CheckDefaultDevice()` 检测默认麦克风是否改变。
 
 ---
@@ -291,4 +292,4 @@ dotnet run --project src\NoiseReduction.App
 | 固定窗口尺寸 | 元素少，无需自适应 |
 | Mutex 单实例 | 防止重复启动 |
 | C++ Bridge 而非直接 P/Invoke | 隔离声网 SDK 复杂性 |
-| WasapiOut 回退 | WaveOut 对虚拟设备兼容性更好 |
+| WASAPI 优先 + WaveOut 降级 | WASAPI 延迟更低；WaveOut 作为对部分虚拟音频设备的兼容兜底 |

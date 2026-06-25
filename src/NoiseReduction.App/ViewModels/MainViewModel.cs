@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Threading;
@@ -35,7 +36,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public MainViewModel()
     {
-        _logger = new AppLogger();
+        var logDir = Path.Combine(AppContext.BaseDirectory, "log");
+        Directory.CreateDirectory(logDir);
+        var logPath = Path.Combine(logDir, $"app-{DateTime.Now:yyyyMMdd}.log");
+        _logger = new AppLogger(logPath);
         _logger.EntryAdded += OnLogEntryAdded;
 
         // Load config

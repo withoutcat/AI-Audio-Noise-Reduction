@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 
 namespace NoiseReduction.Core.Logging;
 
@@ -13,7 +14,13 @@ public sealed class AppLogger
 {
     private readonly object _lock = new();
     private readonly ObservableCollection<LogEntry> _entries = new();
+    private readonly string? _logFilePath;
     private LogLevel _minLevel = LogLevel.Info;
+
+    public AppLogger(string? logFilePath = null)
+    {
+        _logFilePath = logFilePath;
+    }
 
     public IReadOnlyList<LogEntry> Entries
     {
@@ -53,6 +60,20 @@ public sealed class AppLogger
             while (_entries.Count > 500)
             {
                 _entries.RemoveAt(0);
+            }
+
+            // Write to file log
+            if (_logFilePath != null)
+            {
+                try
+                {
+                    var line = $"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss}] [{entry.Level}] {entry.Message}";
+                    File.AppendAllText(_logFilePath, line + Environment.NewLine);
+                }
+                catch
+                {
+                    // Best-effort: don't crash if file logging fails
+                }
             }
         }
 
