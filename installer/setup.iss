@@ -7,9 +7,11 @@
 ;   3. ISCC installer\setup.iss
 
 #define AppName "AI Noise Reduction"
-#define AppVersion "1.0.0"
+#ifndef AppVersion
+  #define AppVersion "0.0.0"
+#endif
 #define AppPublisher "AI Audio Noise Reduction"
-#define AppURL "https://github.com/your-org/AI-audio-noise-reduction"
+#define AppURL "https://github.com/withoutcat/AI-Audio-Noise-Reduction"
 #define DotNetURL "https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.9/windowsdesktop-runtime-10.0.9-win-x64.exe"
 #define DotNetExe "windowsdesktop-runtime-10.0.9-win-x64.exe"
 #define VBCableURL "https://vb-audio.com/Cable/"
@@ -23,6 +25,11 @@
 #define AppPublishDir "..\src\NoiseReduction.App\bin\Release\net10.0-windows\win-x64\publish"
 #define HelperPublishDir "NoiseReduction.InstallerHelper\bin\Release\net10.0-windows\win-x64\publish"
 
+; Output filename (overridable via ISCC /DOutputFileName=...)
+#ifndef OutputFileName
+  #define OutputFileName "AINoiseReduction-{#AppVersion}-win-x64"
+#endif
+
 [Setup]
 AppId={{8A2B3C4D-5E6F-7890-ABCD-EF1234567890}
 AppName={#AppName}
@@ -35,7 +42,7 @@ DefaultDirName={autopf}\AI Noise Reduction
 DefaultGroupName={#AppName}
 AllowNoIcons=yes
 OutputDir=output
-OutputBaseFilename=AI_Noise_Reduction_Setup_{#AppVersion}
+OutputBaseFilename={#OutputFileName}
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
