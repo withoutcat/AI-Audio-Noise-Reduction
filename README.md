@@ -47,15 +47,12 @@ That's it! Your voice is now crystal clear.
 
 ## 🏗️ How It Works
 
-```
-┌─────────────┐    ┌─────────────────────┐    ┌─────────────┐    ┌─────────────┐
-│  Microphone │───▶│ Agora SDK (16kHz)   │───▶│ AI Denoiser │───▶│   Output    │
-│   (Select)  │    │  AI Noise Suppress  │    │             │    │  VB-CABLE   │
-└─────────────┘    └─────────────────────┘    └─────────────┘    └─────────────┘
-                                                                         │
-                                                                         ▼
-                                                                  Any Application
-                                                               (Teams, Zoom, etc.)
+```mermaid
+graph LR
+    A[Microphone<br/>Selection]
+    --> C[ANR<br/>AI Noise Reduction]
+    C --> D[Virtual Microphone<br/>VB-CABLE]
+    D --> E[Select Virtual Microphone in Any App<br/>Teams, Zoom, Chrome, Games etc.]
 ```
 
 | Stage | Detail |
