@@ -111,10 +111,28 @@ try {
 finally { Pop-Location }
 
 # -----------------------------------------------------------
-# Step 4: Run Inno Setup
+# Step 4: Determine version
 # -----------------------------------------------------------
 Write-Host ""
-Write-Host "Step 4/4: Compiling Inno Setup installer..." -ForegroundColor Yellow
+Write-Host "Step 4/4: Determining version..." -ForegroundColor Yellow
+
+# Try latest Git tag first, fall back to 0.0.0
+# Use try/catch because $ErrorActionPreference=Stop treats native command stderr as terminating
+try {
+    $version = & git describe --tags --abbrev=0 2>$null
+    if ($LASTEXITCODE -ne 0) { throw }
+    $version = $version.TrimStart('v')
+    Write-Host "  Git tag: $version" -ForegroundColor Gray
+} catch {
+    $version = "0.0.0"
+    Write-Host "  No git tag found, using 0.0.0" -ForegroundColor Gray
+}
+
+# -----------------------------------------------------------
+# Step 5: Run Inno Setup
+# -----------------------------------------------------------
+Write-Host ""
+Write-Host "Step 5/5: Compiling Inno Setup installer..." -ForegroundColor Yellow
 
 $outputDir = Join-Path (Split-Path $issFile -Parent) "output"
 if (Test-Path $outputDir) {
@@ -123,7 +141,7 @@ if (Test-Path $outputDir) {
 
 Push-Location (Split-Path $issFile -Parent)
 try {
-    & $iscc $issFile
+    & $iscc "/DAppVersion=$version" $issFile
     if ($LASTEXITCODE -ne 0) { throw "ISCC compilation failed with error code $LASTEXITCODE" }
     Write-Host "[OK] Installer compiled" -ForegroundColor Green
 }

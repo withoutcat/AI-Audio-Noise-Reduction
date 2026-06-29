@@ -27,7 +27,7 @@
 
 ; Output filename (overridable via ISCC /DOutputFileName=...)
 #ifndef OutputFileName
-  #define OutputFileName "AINoiseReduction-{#AppVersion}-win-x64"
+  #define OutputFileName "AINoiseReduction-" + AppVersion + "-win-x64"
 #endif
 
 [Setup]
@@ -108,7 +108,7 @@ Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Dirs]
-Name: "{app}\log"
+Name: "{app}\logs"
 
 [Code]
 var
@@ -319,7 +319,7 @@ var
 begin
   if CurStep <> ssPostInstall then Exit;
 
-  LogFile := ExpandConstant('{app}') + '\log\installer.log';
+  LogFile := ExpandConstant('{app}') + '\logs\installer.log';
   TS := '[' + GetDateTimeString('yyyy-mm-dd hh:nn:ss', '#', '#') + '] ';
 
   SaveStringToFile(LogFile, TS + '=== Installation post-install phase ===' + #13#10, True);

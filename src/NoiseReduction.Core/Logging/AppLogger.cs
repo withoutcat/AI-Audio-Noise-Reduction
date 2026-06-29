@@ -48,7 +48,17 @@ public sealed class AppLogger
             if (_defaultInstance != null) return;
     
             var dir = logDirectory ?? Path.Combine(AppContext.BaseDirectory, "logs");
-            Directory.CreateDirectory(dir);
+            try
+            {
+                Directory.CreateDirectory(dir);
+            }
+            catch
+            {
+                // If we can't create the log directory (e.g. installed under
+                // Program Files without elevation), fall back to a temp path.
+                dir = Path.Combine(Path.GetTempPath(), "ANR-logs");
+                Directory.CreateDirectory(dir);
+            }
             var logPath = Path.Combine(dir, $"ANR-{DateTime.Now:yyyyMMdd}.log");
             _defaultInstance = new AppLogger(logPath);
         }
