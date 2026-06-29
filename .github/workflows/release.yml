@@ -145,12 +145,26 @@ jobs:
       # ---------------------------------------------------------------
       # Step 6: Create GitHub Release (only when triggered by tag)
       # ---------------------------------------------------------------
+      - name: Generate release body from template
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: release_body
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BODY=$(sed "s/{{VERSION}}/$VERSION/g" .github/RELEASE_TEMPLATE.md)
+          {
+            echo "body<<RELEASE_BODY_EOF"
+            echo "$BODY"
+            echo "RELEASE_BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: "v${{ steps.version.outputs.version }}"
           tag_name: ${{ github.ref_name }}
+          body: ${{ steps.release_body.outputs.body }}
           generate_release_notes: true
           files: installer\output\*.exe
           prerelease: false
