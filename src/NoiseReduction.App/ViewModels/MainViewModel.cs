@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Threading;
@@ -19,7 +18,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly IAudioDeviceManager _deviceManager = new NaudioDeviceManager();
     private readonly DispatcherTimer _statsTimer;
-    private readonly AppLogger _logger;
     private readonly AppConfig _config;
     private IAudioPipelineSession? _session;
     private AudioDeviceInfo? _selectedCaptureDevice;
@@ -36,22 +34,18 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public MainViewModel()
     {
-        var logDir = Path.Combine(AppContext.BaseDirectory, "log");
-        Directory.CreateDirectory(logDir);
-        var logPath = Path.Combine(logDir, $"app-{DateTime.Now:yyyyMMdd}.log");
-        _logger = new AppLogger(logPath);
-        _logger.EntryAdded += OnLogEntryAdded;
-
+        AppLogger.Instance.EntryAdded += OnLogEntryAdded;
+    
         // Load config
         _config = AppConfig.Load();
         _appId = _config.AppId ?? "";
         _debugMode = _config.DebugMode;
         _ainsMode = _config.LastAinsMode;
-
+    
         ToggleCommand = new RelayCommand(Toggle, CanToggle);
         ClearLogCommand = new RelayCommand(() =>
         {
-            _logger.Clear();
+            AppLogger.Instance.Clear();
             LogText = "";
             OnPropertyChanged(nameof(LogText));
         });
@@ -211,13 +205,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 // User clicked "解除" — stop session first, then clear AppID
                 if (_isActive) Stop();
                 AppId = "";
-                _logger.Info("AppID 已解除");
+                AppLogger.Instance.Info("AppID 已解除");
             }
             else if (dialog.VerifiedAppId != _appId)
             {
                 // User verified a new AppID — update and persist it
                 AppId = dialog.VerifiedAppId;
-                _logger.Info("AppID 已验证并更新");
+                AppLogger.Instance.Info("AppID 已验证并更新");
             }
         }
         // If !WasVerified or dialog cancelled, keep the old AppId unchanged
@@ -227,7 +221,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         _statsTimer.Stop();
         _session?.Dispose();
-        _logger.EntryAdded -= OnLogEntryAdded;
+        AppLogger.Instance.EntryAdded -= OnLogEntryAdded;
     }
 
     private void RefreshDevices()
@@ -278,15 +272,21 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             using var enumerator = new MMDeviceEnumerator();
             var defaultMic = enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Console);
             var isDefault = defaultMic.FriendlyName.StartsWith(_config.VirtualMicphoneName, StringComparison.OrdinalIgnoreCase);
-            if (ShowDeviceWarning != !isDefault)
-            {
-                ShowDeviceWarning = !isDefault;
-                OnPropertyChanged(nameof(ShowDeviceWarning));
-            }
+            UpdateDeviceWarning(isDefault);
         }
         catch
         {
-            ShowDeviceWarning = true;
+            UpdateDeviceWarning(false);
+        }
+    }
+
+    private void UpdateDeviceWarning(bool isCableOutputDefault)
+    {
+        // Warning only shows when denoising is RUNNING AND default mic ≠ CABLE Output
+        var shouldShow = _isActive && !isCableOutputDefault;
+        if (ShowDeviceWarning != shouldShow)
+        {
+            ShowDeviceWarning = shouldShow;
             OnPropertyChanged(nameof(ShowDeviceWarning));
         }
     }
@@ -328,7 +328,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         if (!HasAppId)
         {
             StatusMessage = "请先配置声网 AppID。";
-            _logger.Info("请先点击状态栏的 AppID，配置并验证声网 AppID");
+            AppLogger.Instance.Info("请先点击状态栏的 AppID，配置并验证声网 AppID");
             return;
         }
 
@@ -339,17 +339,17 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (cableOutput == null)
             {
                 StatusMessage = "未检测到 VB-CABLE 虚拟设备。请先安装 VB-CABLE Virtual Audio Device。";
-                _logger.Verbose("错误: 未找到 CABLE Output 设备");
+                AppLogger.Instance.Verbose("错误: 未找到 CABLE Output 设备");
                 return;
             }
 
             var renderDeviceName = CaptureToRenderDeviceName(cableOutput.Name);
-            _logger.Verbose($"虚拟设备: {cableOutput.Name} → 写入设备: {renderDeviceName}");
+            AppLogger.Instance.Verbose($"虚拟设备: {cableOutput.Name} → 写入设备: {renderDeviceName}");
 
             var renderDevices = _deviceManager.GetRenderDevices().ToList();
-            _logger.Verbose($"系统输出设备(渲染设备)共 {renderDevices.Count} 个:");
+            AppLogger.Instance.Verbose($"系统输出设备(渲染设备)共 {renderDevices.Count} 个:");
             foreach (var rd in renderDevices)
-                _logger.Verbose($"  - {rd.Name}");
+                AppLogger.Instance.Verbose($"  - {rd.Name}");
 
             var renderDevice = renderDevices.FirstOrDefault(d =>
                 d.Name.Equals(renderDeviceName, StringComparison.OrdinalIgnoreCase))
@@ -359,11 +359,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (renderDevice is null)
             {
                 StatusMessage = $"未找到渲染设备: {renderDeviceName}。请检查虚拟麦克风设置。";
-                _logger.Verbose($"错误: 未找到渲染设备 {renderDeviceName}");
+                AppLogger.Instance.Verbose($"错误: 未找到渲染设备 {renderDeviceName}");
                 return;
             }
 
-            _logger.Verbose($"匹配到渲染设备: {renderDevice.Name}");
+            AppLogger.Instance.Verbose($"匹配到渲染设备: {renderDevice.Name}");
 
             // Save and attempt to switch default recording device
             _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
@@ -371,13 +371,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 var switched = AudioDeviceUtility.TrySetDefaultCaptureDevice(cableOutput.Id);
                 if (switched)
-                    _logger.Info($"已将默认麦克风切换为: {cableOutput.Name}");
+                    AppLogger.Instance.Info($"已将默认麦克风切换为: {cableOutput.Name}");
                 else
-                    _logger.Info("无法自动切换默认麦克风（系统限制），用户可在声音设置中手动选择");
+                    AppLogger.Instance.Info("无法自动切换默认麦克风（系统限制），用户可在声音设置中手动选择");
             }
             else
             {
-                _logger.Info("无法读取当前默认麦克风，跳过自动切换");
+                AppLogger.Instance.Info("无法读取当前默认麦克风，跳过自动切换");
             }
 
             // Create session and immediately update UI
@@ -386,10 +386,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 SelectedCaptureDevice,
                 renderDevice,
                 AinsMode,
-                _logger);
+                AppLogger.Instance);
 
             _isActive = true;
             _statsTimer.Start();
+            // Immediate check: the default mic may have just been switched
+            CheckDefaultDevice();
             RaiseStateChanged();
 
             await Task.Run(() => _session.Start());
@@ -406,13 +408,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             // If init failed because AppID is invalid, clear it back to unverified
             if (ex.Message.StartsWith("初始化失败", StringComparison.Ordinal) && HasAppId)
             {
-                _logger.Info("AppID 无效，已清除，请重新配置");
+                AppLogger.Instance.Info("AppID 无效，已清除，请重新配置");
                 AppId = "";  // clears config + UI
             }
             else
             {
                 StatusMessage = $"启动失败: {ex.Message}";
-                _logger.Info($"错误: {ex.Message}");
+                AppLogger.Instance.Info($"错误: {ex.Message}");
             }
 
             RaiseStateChanged();
@@ -434,6 +436,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             AudioDeviceUtility.TrySetDefaultCaptureDevice(_originalDefaultMicId);
             _originalDefaultMicId = null;
+        }
+
+        // Hide warning when stopped
+        if (ShowDeviceWarning)
+        {
+            ShowDeviceWarning = false;
+            OnPropertyChanged(nameof(ShowDeviceWarning));
         }
 
         StatusMessage = "降噪已停止";

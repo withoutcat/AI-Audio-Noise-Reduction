@@ -357,7 +357,11 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     {
         var bridgeDllPath = Path.Combine(AppContext.BaseDirectory, "native", "Bridge.dll");
         if (!File.Exists(bridgeDllPath))
-            return (false, "", $"Bridge DLL not found: {bridgeDllPath}");
+        {
+            var msg = $"Bridge DLL not found: {bridgeDllPath}";
+            AppLogger.Instance.Error(msg);
+            return (false, "", msg);
+        }
 
         IntPtr dll = IntPtr.Zero;
         try
@@ -374,19 +378,22 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
 
             int ret = init(appId);
             if (ret != 0)
-                return (false, "", $"引擎初始化失败 (错误码: {ret})");
+            {
+                var msg = $"引擎初始化失败 (错误码: {ret})";
+                AppLogger.Instance.Error(msg);
+                return (false, "", msg);
+            }
 
-            // Get SDK version
             var versionPtr = getVersion();
             string sdkVersion = Marshal.PtrToStringAnsi(versionPtr) ?? "未知";
 
-            // Release engine
             release();
 
             return (true, sdkVersion, "");
         }
         catch (Exception ex)
         {
+            AppLogger.Instance.Error(ex, "VerifyAppId 异常");
             return (false, "", ex.Message);
         }
         finally

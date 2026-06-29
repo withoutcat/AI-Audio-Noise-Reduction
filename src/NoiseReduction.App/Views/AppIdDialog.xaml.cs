@@ -1,4 +1,5 @@
 using System.Windows;
+using NoiseReduction.Core.Logging;
 using NoiseReduction.Infrastructure.Pipeline;
 
 namespace NoiseReduction.App.Views;
@@ -33,9 +34,10 @@ public partial class AppIdDialog : Window
         {
             var (isValid, sdkVersion, errorMessage) = await Task.Run(() =>
                 AgoraAinsPipelineSession.VerifyAppId(appId));
-
+        
             if (isValid)
             {
+                AppLogger.Instance.Info($"AppID 验证成功 (SDK: {sdkVersion})");
                 // Verification passed — auto-close and return the AppID
                 WasVerified = true;
                 VerifiedAppId = appId;
@@ -44,6 +46,7 @@ public partial class AppIdDialog : Window
             }
             else
             {
+                AppLogger.Instance.Error($"AppID 验证失败 (SDK: {sdkVersion}): {errorMessage}");
                 ShowResult(false,
                     "✗ 验证失败",
                     $"SDK 版本: {sdkVersion}",
@@ -53,6 +56,7 @@ public partial class AppIdDialog : Window
         }
         catch (Exception ex)
         {
+            AppLogger.Instance.Error(ex, "AppID 验证过程发生异常");
             ShowResult(false, "验证过程出错", "", ex.Message);
         }
         finally

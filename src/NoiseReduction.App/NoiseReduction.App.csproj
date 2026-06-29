@@ -15,16 +15,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Bridge DLL -->
-    <None Include="$(BridgeDir)Bridge.dll" CopyToOutputDirectory="PreserveNewest" />
-    <!-- SDK DLLs (minimal set: only what we actually need, ~29MB saved vs all *.dll) -->
-    <None Include="$(SdkDir)x86_64\agora_rtc_sdk.dll" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(SdkDir)x86_64\libagora_ai_noise_suppression_extension.dll" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(SdkDir)x86_64\libaosl.dll" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(SdkDir)x86_64\libagora-fdkaac.dll" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(SdkDir)x86_64\libagora-ffmpeg.dll" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(SdkDir)x86_64\libagora-soundtouch.dll" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(SdkDir)x86_64\libagora-wgc.dll" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(SdkDir)x86_64\glfw3.dll" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Bridge DLL (copied to native\ subdirectory) -->
+    <None Include="$(BridgeDir)Bridge.dll" Link="native\Bridge.dll" CopyToOutputDirectory="PreserveNewest" />
+    <!-- All SDK DLLs from x86_64 (full SDK set, includes all required dependencies) -->
+    <None Include="$(SdkDir)x86_64\*.dll" Link="native\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  
+  <!-- Clean up legacy root-level native DLLs that may linger from previous build config -->
+  <Target Name="CleanLegacyRootNativeDlls" BeforeTargets="BeforeBuild">
+    <Delete Files="$(OutputPath)Bridge.dll" Condition="Exists('$(OutputPath)Bridge.dll')" />
+    <Delete Files="$(OutputPath)agora_rtc_sdk.dll" Condition="Exists('$(OutputPath)agora_rtc_sdk.dll')" />
+    <Delete Files="$(OutputPath)libagora_ai_noise_suppression_extension.dll" Condition="Exists('$(OutputPath)libagora_ai_noise_suppression_extension.dll')" />
+    <Delete Files="$(OutputPath)libaosl.dll" Condition="Exists('$(OutputPath)libaosl.dll')" />
+    <Delete Files="$(OutputPath)libagora-fdkaac.dll" Condition="Exists('$(OutputPath)libagora-fdkaac.dll')" />
+    <Delete Files="$(OutputPath)libagora-ffmpeg.dll" Condition="Exists('$(OutputPath)libagora-ffmpeg.dll')" />
+    <Delete Files="$(OutputPath)libagora-soundtouch.dll" Condition="Exists('$(OutputPath)libagora-soundtouch.dll')" />
+    <Delete Files="$(OutputPath)libagora-wgc.dll" Condition="Exists('$(OutputPath)libagora-wgc.dll')" />
+    <Delete Files="$(OutputPath)glfw3.dll" Condition="Exists('$(OutputPath)glfw3.dll')" />
+  </Target>
 </Project>

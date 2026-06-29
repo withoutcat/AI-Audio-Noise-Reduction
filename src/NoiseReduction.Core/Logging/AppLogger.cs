@@ -6,8 +6,11 @@ namespace NoiseReduction.Core.Logging;
 public enum LogLevel
 {
     Verbose,
+    Debug,
     Info,
-    Debug
+    Warn,
+    Error,
+    Fatal
 }
 
 public sealed class AppLogger
@@ -16,6 +19,42 @@ public sealed class AppLogger
     private readonly ObservableCollection<LogEntry> _entries = new();
     private readonly string? _logFilePath;
     private LogLevel _minLevel = LogLevel.Info;
+
+    // ── Static / global access ──────────────────────────────────────
+
+    private static AppLogger? _defaultInstance;
+    private static readonly object _initLock = new();
+
+    /// <summary>
+    /// Gets the default application-wide logger instance.
+    /// Must call <see cref="Initialize"/> once at startup before first use.
+    /// </summary>
+    public static AppLogger Instance =>
+        _defaultInstance ?? throw new InvalidOperationException(
+            "AppLogger has not been initialized. Call AppLogger.Initialize() at application startup.");
+
+    public static bool IsInitialized => _defaultInstance != null;
+
+    /// <summary>
+    /// Initialize the default application-wide logger.
+    /// Logs are written to {AppContext.BaseDirectory}/logs/ by default
+    /// (i.e. next to the running executable, works for both dotnet run and installed app).
+    /// Safe to call multiple times — only the first call takes effect.
+    /// </summary>
+    public static void Initialize(string? logDirectory = null)
+    {
+        lock (_initLock)
+        {
+            if (_defaultInstance != null) return;
+    
+            var dir = logDirectory ?? Path.Combine(AppContext.BaseDirectory, "logs");
+            Directory.CreateDirectory(dir);
+            var logPath = Path.Combine(dir, $"ANR-{DateTime.Now:yyyyMMdd}.log");
+            _defaultInstance = new AppLogger(logPath);
+        }
+    }
+
+    // ── Instance ────────────────────────────────────────────────────
 
     public AppLogger(string? logFilePath = null)
     {
@@ -33,19 +72,30 @@ public sealed class AppLogger
         set => _minLevel = value;
     }
 
-    public void Verbose(string message)
+    // ── Logging methods ─────────────────────────────────────────────
+
+    public void Verbose(string message) => Log(LogLevel.Verbose, message);
+    public void Debug(string message) => Log(LogLevel.Debug, message);
+    public void Info(string message) => Log(LogLevel.Info, message);
+    public void Warn(string message) => Log(LogLevel.Warn, message);
+    public void Error(string message) => Log(LogLevel.Error, message);
+    public void Fatal(string message) => Log(LogLevel.Fatal, message);
+
+    /// <summary>Log an exception at Error level with full stack trace.</summary>
+    public void Error(Exception ex, string? message = null)
     {
-        Log(LogLevel.Verbose, message);
+        Log(LogLevel.Error, FormatException(ex, message));
     }
 
-    public void Info(string message)
+    /// <summary>Log an exception at Fatal level with full stack trace.</summary>
+    public void Fatal(Exception ex, string? message = null)
     {
-        Log(LogLevel.Info, message);
+        Log(LogLevel.Fatal, FormatException(ex, message));
     }
 
-    public void Debug(string message)
+    private static string FormatException(Exception ex, string? message)
     {
-        Log(LogLevel.Debug, message);
+        return string.IsNullOrEmpty(message) ? ex.ToString() : $"{message}\n{ex}";
     }
 
     private void Log(LogLevel level, string message)
@@ -56,13 +106,11 @@ public sealed class AppLogger
         lock (_lock)
         {
             _entries.Add(entry);
-            // Keep max 500 entries
+            // Keep max 500 entries in memory
             while (_entries.Count > 500)
-            {
                 _entries.RemoveAt(0);
-            }
 
-            // Write to file log
+            // Write to file log (best-effort)
             if (_logFilePath != null)
             {
                 try
@@ -70,10 +118,7 @@ public sealed class AppLogger
                     var line = $"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss}] [{entry.Level}] {entry.Message}";
                     File.AppendAllText(_logFilePath, line + Environment.NewLine);
                 }
-                catch
-                {
-                    // Best-effort: don't crash if file logging fails
-                }
+                catch { }
             }
         }
 
@@ -82,10 +127,7 @@ public sealed class AppLogger
 
     public void Clear()
     {
-        lock (_lock)
-        {
-            _entries.Clear();
-        }
+        lock (_lock) _entries.Clear();
         Cleared?.Invoke(this, EventArgs.Empty);
     }
 

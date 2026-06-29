@@ -77,15 +77,7 @@ Source: "{#AppPublishDir}\NAudio.WinForms.dll";                DestDir: "{app}";
 Source: "{#AppPublishDir}\NAudio.WinMM.dll";                   DestDir: "{app}"; Flags: ignoreversion
 
 ; === Native DLLs (native\ subdirectory) ===
-Source: "{#AppPublishDir}\Bridge.dll";                                  DestDir: "{app}\native"; Flags: ignoreversion
-Source: "{#AppPublishDir}\agora_rtc_sdk.dll";                           DestDir: "{app}\native"; Flags: ignoreversion
-Source: "{#AppPublishDir}\glfw3.dll";                                   DestDir: "{app}\native"; Flags: ignoreversion
-Source: "{#AppPublishDir}\libagora-fdkaac.dll";                         DestDir: "{app}\native"; Flags: ignoreversion
-Source: "{#AppPublishDir}\libagora-ffmpeg.dll";                         DestDir: "{app}\native"; Flags: ignoreversion
-Source: "{#AppPublishDir}\libagora-soundtouch.dll";                     DestDir: "{app}\native"; Flags: ignoreversion
-Source: "{#AppPublishDir}\libagora-wgc.dll";                            DestDir: "{app}\native"; Flags: ignoreversion
-Source: "{#AppPublishDir}\libagora_ai_noise_suppression_extension.dll"; DestDir: "{app}\native"; Flags: ignoreversion
-Source: "{#AppPublishDir}\libaosl.dll";                                 DestDir: "{app}\native"; Flags: ignoreversion
+Source: "{#AppPublishDir}\native\*.dll"; DestDir: "{app}\native"; Flags: ignoreversion
 
 ; === Default config (don't overwrite user edits on upgrade) ===
 Source: "assets\config.default.json"; DestDir: "{app}"; DestName: "config.json"; Flags: ignoreversion onlyifdoesntexist
