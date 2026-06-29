@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases"><img src="https://img.shields.io/github/v/release/withoutcat/AI-Audio-Noise-Reduction?label=下载&color=green" alt="下载" /></a>
+  <a href="https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases"><img src="https://img.shields.io/github/v/release/withoutcat/AI-Audio-Noise-Reduction?label=%E4%B8%8B%E8%BD%BD&color=green" alt="下载" /></a>
 </p>
 
 ---
