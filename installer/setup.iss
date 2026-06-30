@@ -112,7 +112,7 @@ Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon; IconFilename: "{app}\application.ico"
 
 [Dirs]
-Name: "{app}\logs"
+Name: "{app}\logs"; Permissions: users-modify
 
 [Code]
 var

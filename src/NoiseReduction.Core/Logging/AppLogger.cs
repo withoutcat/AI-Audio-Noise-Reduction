@@ -51,10 +51,16 @@ public sealed class AppLogger
             try
             {
                 Directory.CreateDirectory(dir);
+                // Test write permission by creating and deleting a temp file.
+                // Directory.CreateDirectory can succeed on an existing dir even
+                // when the user lacks write access (e.g. Program Files).
+                var testFile = Path.Combine(dir, $".wtest-{Guid.NewGuid():N}.tmp");
+                File.WriteAllText(testFile, "");
+                File.Delete(testFile);
             }
             catch
             {
-                // If we can't create the log directory (e.g. installed under
+                // If we can't create the log directory or write to it (e.g. installed under
                 // Program Files without elevation), fall back to a temp path.
                 dir = Path.Combine(Path.GetTempPath(), "ANR-logs");
                 Directory.CreateDirectory(dir);
