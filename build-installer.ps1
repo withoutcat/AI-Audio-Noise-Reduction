@@ -1,7 +1,7 @@
 ﻿# build-installer.ps1
 # Build the AI Noise Reduction installer using Inno Setup.
 # Prerequisites:
-#   - Visual Studio 2022 with C++ tools (for Bridge DLL)
+#   - Visual Studio 2022+ with C++ tools (for Bridge DLL)
 #   - .NET SDK 10.0
 #   - Inno Setup 6 (https://jrsoftware.org/isdl.php)
 #

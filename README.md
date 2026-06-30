@@ -68,7 +68,7 @@ graph LR
 
 ### Using the Installer (Recommended)
 
-Download `AI_Noise_Reduction_Setup_1.0.0.exe` from [Releases](https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases) and run it.
+Download `AINoiseReduction-1.0.0-win-x64.exe` from [Releases](https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases) and run it.
 
 The installer will:
 - ✅ Install the main application
@@ -134,7 +134,7 @@ dotnet run --project src\NoiseReduction.App
 .\build-installer.ps1
 ```
 
-Output: `installer\output\AI_Noise_Reduction_Setup_1.0.0.exe`
+Output: `installer\output\AINoiseReduction-1.0.0-win-x64.exe`
 
 </details>
 

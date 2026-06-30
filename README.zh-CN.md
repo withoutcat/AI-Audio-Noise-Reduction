@@ -68,7 +68,7 @@ graph LR
 
 ### 使用安装程序（推荐）
 
-从 [Releases](https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases) 下载 `AI_Noise_Reduction_Setup_1.0.0.exe` 并运行。
+从 [Releases](https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases) 下载 `AINoiseReduction-1.0.0-win-x64.exe` 并运行。
 
 安装程序将：
 - ✅ 安装主应用程序
@@ -134,7 +134,7 @@ dotnet run --project src\NoiseReduction.App
 .\build-installer.ps1
 ```
 
-输出：`installer\output\AI_Noise_Reduction_Setup_1.0.0.exe`
+输出：`installer\output\AINoiseReduction-1.0.0-win-x64.exe`
 
 </details>
 
