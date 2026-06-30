@@ -53,6 +53,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
 AlwaysRestart=no
 SetupLogging=yes
+SetupIconFile=..\src\NoiseReduction.App\Assets\application.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -82,6 +83,9 @@ Source: "{#AppPublishDir}\native\*.dll"; DestDir: "{app}\native"; Flags: ignorev
 ; === Default config (don't overwrite user edits on upgrade) ===
 Source: "assets\config.default.json"; DestDir: "{app}"; DestName: "config.json"; Flags: ignoreversion onlyifdoesntexist
 
+; === Application icon (for shortcuts) ===
+Source: "{#AppPublishDir}\application.ico"; DestDir: "{app}"; Flags: ignoreversion
+
 [InstallDelete]
 ; Remove legacy files from previous installer versions (two-dot naming, root-level native DLLs)
 Name: "{app}\NoiseReduction.App.exe"; Type: files
@@ -103,9 +107,9 @@ Name: "{app}\libaosl.dll"; Type: files
 Name: "{app}\NoiseReduction.InstallerHelper.exe"; Type: files
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\application.ico"
 Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon; IconFilename: "{app}\application.ico"
 
 [Dirs]
 Name: "{app}\logs"
