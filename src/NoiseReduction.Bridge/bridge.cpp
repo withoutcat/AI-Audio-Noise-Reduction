@@ -64,8 +64,9 @@ public:
 
     // Set audio format for recording callback
     AudioParams getRecordAudioParams() override {
-        // 48kHz, stereo, read-write mode, 960 samples per call (20ms per frame)
-        return AudioParams(48000, 2, RAW_AUDIO_FRAME_OP_MODE_READ_WRITE, 960);
+        // 48kHz, stereo, read-only mode (gets audio AFTER AINS processing),
+        // 960 samples per call (20ms per frame)
+        return AudioParams(48000, 2, RAW_AUDIO_FRAME_OP_MODE_READ_ONLY, 960);
     }
 
     AudioParams getPlaybackAudioParams() override {
