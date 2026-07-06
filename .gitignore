@@ -36,6 +36,10 @@ Thumbs.db
 *.bak
 *.orig
 *.log
+.reasonix/
+reasonix.*
+--append
+
 
 # Unrelated root files (from other projects)
 verify_dashscope_qwen.js
