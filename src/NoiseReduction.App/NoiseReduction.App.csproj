@@ -27,8 +27,26 @@
   <ItemGroup>
     <!-- Bridge DLL (copied to native\ subdirectory) -->
     <None Include="$(BridgeDir)Bridge.dll" Link="native\Bridge.dll" CopyToOutputDirectory="PreserveNewest" />
-    <!-- All SDK DLLs from x86_64 (full SDK set, includes all required dependencies) -->
-    <None Include="$(SdkDir)x86_64\*.dll" Link="native\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Audio-only SDK DLLs: exclude video/face/spatial/lip-sync/beauty/echo-cancel extensions to reduce app size -->
+    <None Include="$(SdkDir)x86_64\*.dll"
+          Exclude="$(SdkDir)x86_64\video_enc.dll;
+                   $(SdkDir)x86_64\glfw3.dll;
+                   $(SdkDir)x86_64\libagora-wgc.dll;
+                   $(SdkDir)x86_64\libagora_ai_echo_cancellation_extension.dll;
+                   $(SdkDir)x86_64\libagora_audio_beauty_extension.dll;
+                   $(SdkDir)x86_64\libagora_clear_vision_extension.dll;
+                   $(SdkDir)x86_64\libagora_content_inspect_extension.dll;
+                   $(SdkDir)x86_64\libagora_face_capture_extension.dll;
+                   $(SdkDir)x86_64\libagora_face_detection_extension.dll;
+                   $(SdkDir)x86_64\libagora_lip_sync_extension.dll;
+                   $(SdkDir)x86_64\libagora_screen_capture_extension.dll;
+                   $(SdkDir)x86_64\libagora_segmentation_extension.dll;
+                   $(SdkDir)x86_64\libagora_spatial_audio_extension.dll;
+                   $(SdkDir)x86_64\libagora_video_av1_encoder_extension.dll;
+                   $(SdkDir)x86_64\libagora_video_encoder_extension.dll;
+                   $(SdkDir)x86_64\libagora_video_quality_analyzer_extension.dll"
+          Link="native\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   
   <!-- Clean up legacy root-level native DLLs that may linger from previous build config -->

@@ -64,7 +64,7 @@ set "VCVARSALL=%VS_PATH%\VC\Auxiliary\Build\vcvarsall.bat"
 echo Using Visual Studio at: %VS_PATH%
 
 REM Set up VS build environment for x64
-call "%VCVARSALL%" amd64
+call "%VCVARSALL%" amd64 2>nul
 if errorlevel 1 (
     echo ERROR: vcvarsall.bat failed
     exit /b 1

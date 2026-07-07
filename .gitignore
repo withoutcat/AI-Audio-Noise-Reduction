@@ -1,8 +1,6 @@
 # .NET build outputs (DLLs, EXEs, PDBs, etc.)
 src/**/bin/
 src/**/obj/
-installer/**/bin/
-installer/**/obj/
 installer/output
 publish-output/
 

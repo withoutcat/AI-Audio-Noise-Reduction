@@ -82,6 +82,23 @@ The installer will:
 - **[VB-CABLE Virtual Audio Device](https://vb-audio.com/Cable/)** (free) — installed automatically by the installer
 - **[Shengwang (Agora) AppID](https://console.shengwang.cn/)** — Free tier: 10,000 minutes/month
 
+### 🔑 Get a Shengwang AppID
+
+This app uses Shengwang (Agora) AI noise suppression engine. You need an AppID for first-time setup:
+
+1. Open **[Shengwang Console](https://console.shengwang.cn)** and sign up if you don't have an account
+2. Click **项目管理** (Project Management) → **创建项目** (Create Project)
+3. Select **通用项目** (General Project), name it whatever you like
+4. After creation, copy the **AppID**
+
+![Get AppID](.github/image.png)
+
+5. Launch the app, verify your AppID (one-time only)
+
+The free tier includes **10,000 minutes/month**, more than enough for personal noise reduction.
+
+> 💡 Projects created on `console.shengwang.cn` work within China's network. Projects from `console.agora.io` (international) have not been tested.
+
 ---
 
 ## ⚙️ Configuration
