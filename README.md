@@ -68,7 +68,7 @@ graph LR
 
 ### Using the Installer (Recommended)
 
-Download `AINoiseReduction-1.0.0-win-x64.exe` from [Releases](https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases) and run it.
+Download `AINoiseReduction-{{VERSION}}-win-x64.exe` from [Releases](https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases) and run it.
 
 The installer will:
 - ✅ Install the main application
