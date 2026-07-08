@@ -33,8 +33,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
@@ -50,11 +48,13 @@ jobs:
       - name: Determine version
         id: version
         shell: bash
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
-          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
-            VERSION="${{ github.event.inputs.version }}"
+          elif [[ -n "$INPUT_VERSION" ]]; then
+            VERSION="$INPUT_VERSION"
           else
             VERSION="0.0.0-ci.${GITHUB_SHA::8}"
           fi
@@ -69,6 +69,7 @@ jobs:
           echo "Building Bridge C++ DLL..."
           cd src\NoiseReduction.Bridge
           call build.bat
+          if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
         shell: cmd
 
       # ---------------------------------------------------------------
@@ -94,7 +95,7 @@ jobs:
       # Step 3: Compile Inno Setup installer
       # ---------------------------------------------------------------
       - name: Install Inno Setup
-        run: choco install innosetup -y --no-progress
+        run: choco install innosetup --version=6.3.3 -y --no-progress
         shell: cmd
 
       - name: Compile installer
@@ -127,16 +128,10 @@ jobs:
       # ---------------------------------------------------------------
       - name: Generate release body from template
         if: startsWith(github.ref, 'refs/tags/v')
-        id: release_body
         shell: bash
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          BODY=$(sed "s/{{VERSION}}/$VERSION/g" .github/RELEASE_TEMPLATE.md)
-          {
-            echo "body<<RELEASE_BODY_EOF"
-            echo "$BODY"
-            echo "RELEASE_BODY_EOF"
-          } >> "$GITHUB_OUTPUT"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: sed "s/{{VERSION}}/$VERSION/g" .github/RELEASE_TEMPLATE.md > "$RUNNER_TEMP/release-body.md"
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -144,7 +139,5 @@ jobs:
         with:
           name: "v${{ steps.version.outputs.version }}"
           tag_name: ${{ github.ref_name }}
-          body: ${{ steps.release_body.outputs.body }}
-          generate_release_notes: true
+          body_path: ${{ runner.temp }}/release-body.md
           files: installer\output\*.exe
-          prerelease: false
