@@ -116,8 +116,8 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         var enumerator = new MMDeviceEnumerator();
         var renderDevice = enumerator.GetDevice(_renderDevice.Id);
         var deviceFormat = renderDevice.AudioClient.MixFormat;
-        _logger.Verbose($"写入设备: {renderDevice.FriendlyName} [{_renderDevice.Id}]");
-        _logger.Verbose($"设备格式: {deviceFormat.SampleRate}Hz, {deviceFormat.Channels}ch");
+        _logger.Debug($"写入设备: {renderDevice.FriendlyName} [{_renderDevice.Id}]");
+        _logger.Debug($"设备格式: {deviceFormat.SampleRate}Hz, {deviceFormat.Channels}ch");
 
         // Create a BufferedWaveProvider at the device's native output format (48kHz stereo)
         // SDK delivers 48kHz stereo PCM directly via callback
@@ -141,7 +141,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         }
         catch (Exception exWasapi)
         {
-            _logger.Verbose($"WASAPI 初始化失败: {exWasapi.Message}, 尝试 WaveOut");
+            _logger.Debug($"WASAPI 初始化失败: {exWasapi.Message}, 尝试 WaveOut");
             _wasapiOut?.Dispose();
             _wasapiOut = null;
         }
@@ -153,7 +153,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
             for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
                 var caps = WaveOut.GetCapabilities(i);
-                _logger.Verbose($"WaveOut设备 #{i}: {caps.ProductName}");
+                _logger.Debug($"WaveOut设备 #{i}: {caps.ProductName}");
                 if (caps.ProductName.Contains("CABLE", StringComparison.OrdinalIgnoreCase))
                 {
                     waveOutDeviceNum = i;
@@ -197,9 +197,9 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
             if (captureDeviceId != null)
             {
                 ret = _setRecordingDeviceById(captureDeviceId);
-                _logger.Verbose($"设置麦克风: {_captureDevice.Name} (返回: {ret})");
+                _logger.Debug($"设置麦克风: {_captureDevice.Name} (返回: {ret})");
                 _followSystemDevice(false);
-                _logger.Verbose("已禁止跟随系统默认设备");
+                _logger.Debug("已禁止跟随系统默认设备");
             }
         }
 
@@ -220,7 +220,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
             _ => "未知"
         };
         ret = _setAINS(1, _ainsMode);
-        if (ret != 0) _logger.Verbose($"降噪设置返回: {ret}");
+        if (ret != 0) _logger.Debug($"降噪设置返回: {ret}");
 
         // Start output
         _wasapiOut?.Play();
@@ -307,7 +307,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         };
         int ret = _setAINS(1, mode);
         _logger.Info($"降噪等级已切换: {modeName}");
-        if (ret != 0) _logger.Verbose($"降噪等级切换返回: {ret}");
+        if (ret != 0) _logger.Debug($"降噪等级切换返回: {ret}");
     }
 
     /// <summary>
@@ -333,7 +333,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
         }
         else
         {
-            _logger.Verbose($"切换麦克风失败: {device.Name} (返回: {ret})");
+            _logger.Debug($"切换麦克风失败: {device.Name} (返回: {ret})");
         }
     }
 

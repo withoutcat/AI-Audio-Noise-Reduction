@@ -3,8 +3,7 @@
 ;
 ; Build:
 ;   1. dotnet publish src\NoiseReduction.App -c Release -r win-x64 --self-contained false
-;   2. dotnet publish installer\NoiseReduction.InstallerHelper -c Release -r win-x64 --self-contained false
-;   3. ISCC installer\setup.iss
+;   2. ISCC installer\setup.iss
 
 #define AppName "AI Noise Reduction"
 #ifndef AppVersion
@@ -15,6 +14,8 @@
 #define DotNetURL "https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.9/windowsdesktop-runtime-10.0.9-win-x64.exe"
 #define DotNetExe "windowsdesktop-runtime-10.0.9-win-x64.exe"
 #define VBCableURL "https://vb-audio.com/Cable/"
+#define VBCableDownloadURL "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip"
+#define VBCableZipName "VBCABLE_Driver_Pack45.zip"
 #define AppExeName "NoiseReductionApp.exe"
 
 ; Registry property name for VB-CABLE detection
@@ -23,7 +24,6 @@
 
 ; Source paths (relative to this file, in installer\)
 #define AppPublishDir "..\src\NoiseReduction.App\bin\Release\net10.0-windows\win-x64\publish"
-#define HelperPublishDir "NoiseReduction.InstallerHelper\bin\Release\net10.0-windows\win-x64\publish"
 
 ; Output filename (overridable via ISCC /DOutputFileName=...)
 #ifndef OutputFileName
@@ -105,6 +105,22 @@ Name: "{app}\libagora-wgc.dll"; Type: files
 Name: "{app}\libagora_ai_noise_suppression_extension.dll"; Type: files
 Name: "{app}\libaosl.dll"; Type: files
 Name: "{app}\NoiseReduction.InstallerHelper.exe"; Type: files
+Name: "{app}\native\glfw3.dll"; Type: files
+Name: "{app}\native\libagora-wgc.dll"; Type: files
+Name: "{app}\native\libagora_clear_vision_extension.dll"; Type: files
+Name: "{app}\native\libagora_content_inspect_extension.dll"; Type: files
+Name: "{app}\native\libagora_face_capture_extension.dll"; Type: files
+Name: "{app}\native\libagora_face_detection_extension.dll"; Type: files
+Name: "{app}\native\libagora_segmentation_extension.dll"; Type: files
+Name: "{app}\native\libagora_screen_capture_extension.dll"; Type: files
+Name: "{app}\native\libagora_spatial_audio_extension.dll"; Type: files
+Name: "{app}\native\libagora_lip_sync_extension.dll"; Type: files
+Name: "{app}\native\libagora_video_av1_encoder_extension.dll"; Type: files
+Name: "{app}\native\libagora_video_encoder_extension.dll"; Type: files
+Name: "{app}\native\libagora_video_quality_analyzer_extension.dll"; Type: files
+Name: "{app}\native\libagora_audio_beauty_extension.dll"; Type: files
+Name: "{app}\native\video_dec.dll"; Type: files
+Name: "{app}\native\video_enc.dll"; Type: files
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\application.ico"
@@ -116,18 +132,99 @@ Name: "{app}\logs"; Permissions: users-modify
 
 [Code]
 var
+  DownloadPage: TDownloadWizardPage;
   VBCableDetected: Boolean;
   VBCableOkPage: TWizardPage;
   VBCableWaitPage: TWizardPage;
   VBCableWaitLabel: TLabel;
+  VBCableDownloadBtn: TNewButton;
   VBCableRecheckBtn: TNewButton;
-  VBCableSkipAnywayBtn: TNewButton;
-  VBCableOpenUrlBtn: TNewButton;
+  VBCableSkipBtn: TNewButton;
   VBCableStatusLabel: TLabel;
   VBCableWaitDone: Boolean;
-  NetPage: TOutputMarqueeProgressWizardPage;
+  NeedDotNetDownload: Boolean;
+  DotNetDownloadSuccess: Boolean;
+  { ── Download speed tracking ── }
+  DLSpeedStartTick: Int64;
+  DLSpeedLastTick: Int64;
+  DLSpeedLastBytes: Int64;
 
-procedure OnOpenVBCableUrl(Sender: TObject); forward;
+function GetTickCount64: Int64;
+  external 'GetTickCount64@kernel32.dll stdcall';
+
+{ ── OnDownloadProgress: shows real-time speed / size / percentage ── }
+function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
+var
+  NowTick, Elapsed: Int64;
+  Speed: Double;
+  SpeedStr, SizeStr, PctStr: String;
+begin
+  NowTick := GetTickCount64;
+
+  { ── Download speed (update every ~500ms) ── }
+  if DLSpeedStartTick = 0 then
+  begin
+    DLSpeedStartTick := NowTick;
+    DLSpeedLastTick := NowTick;
+    DLSpeedLastBytes := Progress;
+  end
+  else if (NowTick - DLSpeedLastTick) >= 500 then
+  begin
+    if NowTick > DLSpeedLastTick then
+    begin
+      Elapsed := NowTick - DLSpeedLastTick;
+      Speed := (Progress - DLSpeedLastBytes) / Elapsed * 1000.0; // bytes/sec
+      DLSpeedLastTick := NowTick;
+      DLSpeedLastBytes := Progress;
+    end;
+  end;
+
+  { ── Build status text ── }
+  if Speed >= 1048576.0 then
+    SpeedStr := Format('%.1f MB/s', [Speed / 1048576.0])
+  else if Speed >= 1024.0 then
+    SpeedStr := Format('%.0f KB/s', [Speed / 1024.0])
+  else
+    SpeedStr := '';
+
+  if ProgressMax > 0 then
+  begin
+    if Progress < 1024 then
+      SizeStr := Format('%d B', [Progress])
+    else if Progress < 1048576 then
+      SizeStr := Format('%.1f KB', [Progress / 1024.0])
+    else
+      SizeStr := Format('%.1f MB', [Progress / 1048576.0]);
+
+    SizeStr := SizeStr + ' / ';
+
+    if ProgressMax < 1048576 then
+      SizeStr := SizeStr + Format('%.1f KB', [ProgressMax / 1024.0])
+    else
+      SizeStr := SizeStr + Format('%.1f MB', [ProgressMax / 1048576.0]);
+
+    PctStr := Format(' (%d%%)', [Progress * 100 div ProgressMax]);
+  end
+  else
+  begin
+    if Progress < 1048576 then
+      SizeStr := Format('%.1f KB', [Progress / 1024.0])
+    else
+      SizeStr := Format('%.1f MB', [Progress / 1048576.0]);
+    PctStr := '';
+  end;
+
+  if SpeedStr <> '' then
+    DownloadPage.Msg2Label.Caption := SpeedStr + '  |  ' + SizeStr + PctStr
+  else
+    DownloadPage.Msg2Label.Caption := SizeStr + PctStr;
+
+  DownloadPage.Msg1Label.Caption := FileName;
+
+  Result := True; { continue download }
+end;
+
+procedure OnDownloadVBCable(Sender: TObject); forward;
 procedure OnRecheckVBCable(Sender: TObject); forward;
 procedure OnSkipVBCable(Sender: TObject); forward;
 
@@ -209,62 +306,165 @@ begin
   VBCableWaitLabel.Parent := VBCableWaitPage.Surface;
   VBCableWaitLabel.Left := 0; VBCableWaitLabel.Top := 0;
   VBCableWaitLabel.Width := VBCableWaitPage.SurfaceWidth;
-  VBCableWaitLabel.Height := 40;
-  VBCableWaitLabel.Caption := 'VB-CABLE device not detected.' + #13#10 +
-    'Click below to open the official website, download and install, then click "I have installed".';
+  VBCableWaitLabel.Height := 60;
+  VBCableWaitLabel.Caption :=
+    'VB-CABLE device not detected.' + #13#10#13#10 +
+    'Click "Download & Install" to automatically download (~1.3 MB) and install VB-CABLE. ' +
+    'After installation, click "I have installed - Recheck" to verify.';
   VBCableWaitLabel.WordWrap := True;
 
-  VBCableOpenUrlBtn := TNewButton.Create(VBCableWaitPage);
-  VBCableOpenUrlBtn.Parent := VBCableWaitPage.Surface;
-  VBCableOpenUrlBtn.Left := 0; VBCableOpenUrlBtn.Top := 60;
-  VBCableOpenUrlBtn.Width := VBCableWaitPage.SurfaceWidth;
-  VBCableOpenUrlBtn.Height := 30;
-  VBCableOpenUrlBtn.Caption := 'Open official download page';
-  VBCableOpenUrlBtn.OnClick := @OnOpenVBCableUrl;
+  VBCableDownloadBtn := TNewButton.Create(VBCableWaitPage);
+  VBCableDownloadBtn.Parent := VBCableWaitPage.Surface;
+  VBCableDownloadBtn.Left := 0; VBCableDownloadBtn.Top := 80;
+  VBCableDownloadBtn.Width := VBCableWaitPage.SurfaceWidth;
+  VBCableDownloadBtn.Height := 32;
+  VBCableDownloadBtn.Caption := 'Download & Install VB-CABLE';
+  VBCableDownloadBtn.OnClick := @OnDownloadVBCable;
 
   VBCableRecheckBtn := TNewButton.Create(VBCableWaitPage);
   VBCableRecheckBtn.Parent := VBCableWaitPage.Surface;
-  VBCableRecheckBtn.Left := 0; VBCableRecheckBtn.Top := 100;
+  VBCableRecheckBtn.Left := 0; VBCableRecheckBtn.Top := 120;
   VBCableRecheckBtn.Width := VBCableWaitPage.SurfaceWidth;
   VBCableRecheckBtn.Height := 30;
   VBCableRecheckBtn.Caption := 'I have installed - Recheck';
   VBCableRecheckBtn.OnClick := @OnRecheckVBCable;
 
-  VBCableSkipAnywayBtn := TNewButton.Create(VBCableWaitPage);
-  VBCableSkipAnywayBtn.Parent := VBCableWaitPage.Surface;
-  VBCableSkipAnywayBtn.Left := 0; VBCableSkipAnywayBtn.Top := 140;
-  VBCableSkipAnywayBtn.Width := VBCableWaitPage.SurfaceWidth;
-  VBCableSkipAnywayBtn.Height := 30;
-  VBCableSkipAnywayBtn.Caption := 'Skip and continue (not recommended)';
-  VBCableSkipAnywayBtn.OnClick := @OnSkipVBCable;
+  VBCableSkipBtn := TNewButton.Create(VBCableWaitPage);
+  VBCableSkipBtn.Parent := VBCableWaitPage.Surface;
+  VBCableSkipBtn.Left := 0; VBCableSkipBtn.Top := 158;
+  VBCableSkipBtn.Width := VBCableWaitPage.SurfaceWidth;
+  VBCableSkipBtn.Height := 30;
+  VBCableSkipBtn.Caption := 'Skip and continue (not recommended)';
+  VBCableSkipBtn.OnClick := @OnSkipVBCable;
 
   VBCableStatusLabel := TLabel.Create(VBCableWaitPage);
   VBCableStatusLabel.Parent := VBCableWaitPage.Surface;
-  VBCableStatusLabel.Left := 0; VBCableStatusLabel.Top := 190;
+  VBCableStatusLabel.Left := 0; VBCableStatusLabel.Top := 200;
   VBCableStatusLabel.Width := VBCableWaitPage.SurfaceWidth;
   VBCableStatusLabel.Height := 60;
-  VBCableStatusLabel.Caption := 'Note: Without VB-CABLE, denoised audio cannot be output to other apps. You can install it manually later.';
+  VBCableStatusLabel.Caption :=
+    'Note: Without VB-CABLE, denoised audio cannot be output to other apps. ' +
+    'You can install it manually later from {#VBCableURL}';
   VBCableStatusLabel.WordWrap := True;
-  VBCableStatusLabel.Font.Color := clRed;
+  VBCableStatusLabel.Font.Color := clGray;
   VBCableWaitDone := False;
 end;
 
-procedure OnOpenVBCableUrl(Sender: TObject);
+{ ── Download & Install VB-CABLE ── }
+procedure OnDownloadVBCable(Sender: TObject);
 var
-  ErrCode: Integer;
+  ZipPath, ExtractDir, InstallerPath, LogFile, PSCommand, TS: String;
+  ResultCode: Integer;
 begin
-  ShellExec('open', '{#VBCableURL}', '', '', SW_SHOWNORMAL, ewNoWait, ErrCode);
+  ZipPath := ExpandConstant('{tmp}\{#VBCableZipName}');
+  ExtractDir := ExpandConstant('{tmp}\vbcable');
+  LogFile := ExpandConstant('{tmp}\vbcable_install.log');
+  TS := '[' + GetDateTimeString('yyyy-mm-dd hh:nn:ss', '#', '#') + '] ';
+
+  SaveStringToFile(LogFile, TS + '=== VB-CABLE auto-install ===' + #13#10, False);
+
+  { ── Step 1: Download with real progress bar ── }
+  DownloadPage.Clear;
+  DownloadPage.Add('{#VBCableDownloadURL}', '{#VBCableZipName}', '');
+  DownloadPage.Show;
+  try
+    try
+      SaveStringToFile(LogFile, TS + 'Downloading: {#VBCableDownloadURL}' + #13#10, True);
+      DownloadPage.Download;
+      SaveStringToFile(LogFile, TS + 'Download complete: ' + ZipPath + #13#10, True);
+    except
+      if DownloadPage.AbortedByUser then
+        SaveStringToFile(LogFile, TS + 'Download aborted by user' + #13#10, True)
+      else begin
+        SaveStringToFile(LogFile, TS + 'Download FAILED: ' + GetExceptionMessage + #13#10, True);
+        MsgBox('Download failed. Please check your internet connection and try again, ' +
+          'or visit {#VBCableURL} to download manually.', mbError, MB_OK);
+      end;
+      Exit;
+    end;
+  finally
+    DownloadPage.Hide;
+  end;
+
+  if not FileExists(ZipPath) then Exit;
+
+  { ── Step 2: Extract ── }
+  if DirExists(ExtractDir) then
+    DelTree(ExtractDir, True, True, True);
+
+  PSCommand :=
+    'Expand-Archive -Path ''' + ZipPath + ''' -DestinationPath ''' + ExtractDir + ''' -Force';
+
+  if not Exec('powershell.exe',
+    '-NoProfile -ExecutionPolicy Bypass -Command "' + PSCommand + '"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+  begin
+    SaveStringToFile(LogFile, TS + 'Extract FAILED (code ' + IntToStr(ResultCode) + ')' + #13#10, True);
+    MsgBox('Failed to extract VB-CABLE package. Please try again or install manually.',
+      mbError, MB_OK);
+    Exit;
+  end;
+  SaveStringToFile(LogFile, TS + 'Extract complete: ' + ExtractDir + #13#10, True);
+
+  { ── Step 3: Run VB-CABLE installer ── }
+  InstallerPath := ExtractDir + '\VBCABLE_Setup_x64.exe';
+  if not FileExists(InstallerPath) then
+  begin
+    InstallerPath := ExtractDir + '\VBCABLE_Setup.exe';
+    if not FileExists(InstallerPath) then
+    begin
+      SaveStringToFile(LogFile, TS + 'Setup EXE not found in extracted package' + #13#10, True);
+      MsgBox('VB-CABLE setup program not found in the downloaded package. ' +
+        'Please visit {#VBCableURL} to install manually.', mbError, MB_OK);
+      Exit;
+    end;
+  end;
+
+  SaveStringToFile(LogFile, TS + 'Running: ' + InstallerPath + #13#10, True);
+
+  if Exec(InstallerPath, '', ExtractDir, SW_SHOWNORMAL, ewWaitUntilTerminated, ResultCode) then
+    SaveStringToFile(LogFile, TS + 'Installer finished, code: ' + IntToStr(ResultCode) + #13#10, True)
+  else
+    SaveStringToFile(LogFile, TS + 'Failed to launch installer' + #13#10, True);
+
+  { ── Step 4: Clean up temp files ── }
+  try
+    DeleteFile(ZipPath);
+    DelTree(ExtractDir, True, True, True);
+  except
+  end;
+
+  { ── Step 5: Recheck ── }
+  if IsCableInstalled() then
+  begin
+    SaveStringToFile(LogFile, TS + 'VB-CABLE detected after installation' + #13#10, True);
+    VBCableStatusLabel.Caption := 'VB-CABLE detected! Click "Next" to continue.';
+    VBCableStatusLabel.Font.Color := clGreen;
+    VBCableWaitDone := True;
+    WizardForm.NextButton.OnClick(nil);
+  end
+  else
+  begin
+    SaveStringToFile(LogFile, TS + 'VB-CABLE still not detected after installation' + #13#10, True);
+    VBCableStatusLabel.Caption :=
+      'Installation completed, but VB-CABLE was not detected.' + #13#10 +
+      'You may need to reboot your computer before the driver takes effect.' + #13#10 +
+      'After reboot, re-run this installer or install VB-CABLE manually.';
+    VBCableStatusLabel.Font.Color := clRed;
+  end;
 end;
 
 procedure OnRecheckVBCable(Sender: TObject);
 begin
   if IsCableInstalled() then
   begin
+    VBCableStatusLabel.Caption := 'VB-CABLE detected! Click "Next" to continue.';
+    VBCableStatusLabel.Font.Color := clGreen;
     VBCableWaitDone := True;
     WizardForm.NextButton.OnClick(nil);
   end
   else
-    MsgBox('VB-CABLE still not detected. Please confirm installation, or click "Skip".',
+    MsgBox('VB-CABLE still not detected. Please install it first, or click "Skip" to continue without it.',
       mbInformation, MB_OK);
 end;
 
@@ -286,11 +486,20 @@ end;
 
 procedure InitializeWizard();
 begin
+  { ── Shared download page (used by both VB-CABLE and .NET Runtime) ── }
+  DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
+  DownloadPage.ShowBaseNameInsteadOfUrl := False;
+
+  { ── VB-CABLE detection ── }
   VBCableDetected := IsCableInstalled();
   if VBCableDetected then
     CreateVBCableOkPage()
   else
     CreateVBCableWaitPage();
+
+  { ── Check .NET Desktop Runtime ── }
+  NeedDotNetDownload := not IsNetDesktopRuntimeInstalled();
+  DotNetDownloadSuccess := False;
 end;
 
 function ShouldSkipPage(PageId: Integer): Boolean;
@@ -305,19 +514,43 @@ end;
 function NextButtonClick(PageId: Integer): Boolean;
 begin
   Result := True;
+  { ── Block Next on VB-CABLE wait page until user installs or skips ── }
   if (VBCableWaitPage <> nil) and (PageId = VBCableWaitPage.ID) and not VBCableWaitDone then
+  begin
     Result := False;
-end;
+    Exit;
+  end;
 
-procedure CurPageChanged(CurPageID: Integer);
-begin
-  if (VBCableWaitPage <> nil) and (CurPageID = VBCableWaitPage.ID) then
-    VBCableWaitDone := False;
+  { ── Download .NET Desktop Runtime at wpReady with real progress bar ── }
+  if (PageId = wpReady) and NeedDotNetDownload then
+  begin
+    DownloadPage.Clear;
+    DownloadPage.Add('{#DotNetURL}', '{#DotNetExe}', '');
+    DownloadPage.Show;
+    try
+      try
+        DownloadPage.Download;
+        DotNetDownloadSuccess := True;
+        Log('.NET Desktop Runtime download complete');
+      except
+        if DownloadPage.AbortedByUser then
+          Log('.NET Desktop Runtime download aborted by user')
+        else
+          SuppressibleMsgBox(
+            '.NET Desktop Runtime download failed: ' + GetExceptionMessage + #13#10#13#10 +
+            'The application will still be installed, but you need to install .NET Desktop Runtime 10.0 manually to run it.',
+            mbCriticalError, MB_OK, IDOK);
+        Result := True;
+      end;
+    finally
+      DownloadPage.Hide;
+    end;
+  end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  DownloadPath, LogFile: String;
+  DotNetPath, LogFile: String;
   ResultCode: Integer;
   TS: String;
 begin
@@ -326,70 +559,33 @@ begin
   LogFile := ExpandConstant('{app}') + '\logs\installer.log';
   TS := '[' + GetDateTimeString('yyyy-mm-dd hh:nn:ss', '#', '#') + '] ';
 
-  SaveStringToFile(LogFile, TS + '=== Installation post-install phase ===' + #13#10, True);
+  SaveStringToFile(LogFile, TS + '=== Post-install ===' + #13#10, True);
 
-  { --- .NET Desktop Runtime --- }
-  SaveStringToFile(LogFile, TS + 'Checking .NET Desktop Runtime via dotnet --list-runtimes...' + #13#10, True);
-  if IsNetDesktopRuntimeInstalled() then
+  { ── .NET Desktop Runtime silent install ── }
+  if not NeedDotNetDownload then
   begin
-    SaveStringToFile(LogFile, TS + '.NET Desktop Runtime 10.0.x found, skipping download.' + #13#10, True);
-  end
-  else
-  begin
-    SaveStringToFile(LogFile, TS + '.NET Desktop Runtime 10.0.x NOT found.' + #13#10, True);
-    DownloadPath := ExpandConstant('{tmp}\{#DotNetExe}');
-    SaveStringToFile(LogFile, TS + 'Download target: ' + DownloadPath + #13#10, True);
+    SaveStringToFile(LogFile, TS + '.NET Desktop Runtime 10.0.x already installed, skipping.' + #13#10, True);
+    Exit;
+  end;
 
-    if FileExists(DownloadPath) then
-    begin
-      SaveStringToFile(LogFile, TS + 'Cached installer found, reusing.' + #13#10, True);
-    end
+  if not DotNetDownloadSuccess then
+  begin
+    SaveStringToFile(LogFile, TS + '.NET Desktop Runtime download skipped/failed, skipping install.' + #13#10, True);
+    Exit;
+  end;
+
+  DotNetPath := ExpandConstant('{tmp}\{#DotNetExe}');
+  if FileExists(DotNetPath) then
+  begin
+    SaveStringToFile(LogFile, TS + 'Installing .NET Desktop Runtime 10.0.9...' + #13#10, True);
+    SaveStringToFile(LogFile, TS + 'Running: ' + DotNetPath + ' /install /quiet /norestart' + #13#10, True);
+    Exec(DotNetPath, '/install /quiet /norestart', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    if ResultCode = 0 then
+      SaveStringToFile(LogFile, TS + '.NET Desktop Runtime 10.0.9 installed successfully' + #13#10, True)
     else
-    begin
-      SaveStringToFile(LogFile, TS + 'Downloading from: {#DotNetURL}' + #13#10, True);
-
-      NetPage := CreateOutputMarqueeProgressPage(
-        'Installing .NET Runtime',
-        'Downloading .NET Desktop Runtime 10.0.9 (~75 MB)...');
-      NetPage.Show;
-      try
-        NetPage.Animate;
-        SaveStringToFile(LogFile, TS + 'Using PowerShell Invoke-WebRequest...' + #13#10, True);
-        Exec('powershell.exe',
-          '-NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri ''{#DotNetURL}'' -OutFile ''{tmp}\{#DotNetExe}''"',
-          '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-        SaveStringToFile(LogFile, TS + 'PowerShell exit code: ' + IntToStr(ResultCode) + #13#10, True);
-
-        if FileExists(DownloadPath) then
-          SaveStringToFile(LogFile, TS + 'Download complete.' + #13#10, True)
-        else
-          SaveStringToFile(LogFile, TS + 'Download FAILED - file not found after download' + #13#10, True);
-      finally
-        NetPage.Hide;
-      end;
-    end;
-
-    if FileExists(DownloadPath) then
-    begin
-      NetPage := CreateOutputMarqueeProgressPage(
-        'Installing .NET Runtime',
-        'Installing .NET Desktop Runtime 10.0.9. This may take 1-2 minutes...');
-      NetPage.Show;
-      try
-        NetPage.Animate;
-        SaveStringToFile(LogFile, TS + 'Running: ' + DownloadPath + ' /install /quiet /norestart' + #13#10, True);
-        Exec(DownloadPath, '/install /quiet /norestart',
-          '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-        if ResultCode = 0 then
-          SaveStringToFile(LogFile, TS + '.NET Desktop Runtime 10.0.9 installed successfully' + #13#10, True)
-        else
-          SaveStringToFile(LogFile, TS + '.NET Desktop Runtime install FAILED (code ' + IntToStr(ResultCode) + ')' + #13#10, True);
-        RegDeleteValue(HKLM,
-          'SYSTEM\CurrentControlSet\Control\Session Manager',
-          'PendingFileRenameOperations');
-      finally
-        NetPage.Hide;
-      end;
-    end;
+      SaveStringToFile(LogFile, TS + '.NET Desktop Runtime install FAILED (code ' + IntToStr(ResultCode) + ')' + #13#10, True);
+    RegDeleteValue(HKLM,
+      'SYSTEM\CurrentControlSet\Control\Session Manager',
+      'PendingFileRenameOperations');
   end;
 end;

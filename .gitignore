@@ -1,8 +1,6 @@
 # .NET build outputs (DLLs, EXEs, PDBs, etc.)
 src/**/bin/
 src/**/obj/
-installer/**/bin/
-installer/**/obj/
 installer/output
 publish-output/
 
@@ -23,6 +21,7 @@ res/sdk/**/doc/
 res/sdk/**/.commits
 
 # IDE / OS
+.claude/
 .qoder
 .vs/
 .vscode/
@@ -36,6 +35,10 @@ Thumbs.db
 *.bak
 *.orig
 *.log
+.reasonix/
+reasonix.*
+--append
+
 
 # Unrelated root files (from other projects)
 verify_dashscope_qwen.js

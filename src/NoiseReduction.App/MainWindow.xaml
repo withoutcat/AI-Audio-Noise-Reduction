@@ -180,18 +180,20 @@
                         FontSize="12" />
             </DockPanel>
 
-            <TextBox Grid.Row="1"
-                     x:Name="LogTextBox"
-                     IsReadOnly="True"
-                     TextWrapping="Wrap"
-                     VerticalScrollBarVisibility="Auto"
-                     HorizontalScrollBarVisibility="Disabled"
-                     Background="{StaticResource SurfaceBrush}"
-                     BorderThickness="0"
-                     Padding="0"
-                     FontFamily="Consolas, Courier New, monospace"
-                     FontSize="12"
-                     Text="{Binding LogText, Mode=OneWay}" />
+            <RichTextBox Grid.Row="1"
+                         x:Name="LogRichTextBox"
+                         IsReadOnly="True"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled"
+                         Background="{StaticResource SurfaceBrush}"
+                         BorderThickness="0"
+                         Padding="0"
+                         FontFamily="Consolas, Courier New, monospace"
+                         FontSize="12">
+                <RichTextBox.Document>
+                    <FlowDocument PagePadding="0" />
+                </RichTextBox.Document>
+            </RichTextBox>
         </Grid>
 
         <!-- Status Bar -->

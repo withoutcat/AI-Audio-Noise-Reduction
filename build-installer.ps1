@@ -14,7 +14,6 @@ $ErrorActionPreference = "Stop"
 $rootDir = $PSScriptRoot
 $bridgeDir = Join-Path $rootDir "src\NoiseReduction.Bridge"
 $appProj = Join-Path $rootDir "src\NoiseReduction.App\NoiseReduction.App.csproj"
-$helperProj = Join-Path $rootDir "installer\NoiseReduction.InstallerHelper\NoiseReduction.InstallerHelper.csproj"
 $issFile = Join-Path $rootDir "installer\setup.iss"
 
 # -----------------------------------------------------------
@@ -58,7 +57,7 @@ $buildBat = Join-Path $bridgeDir "build.bat"
 if (Test-Path $buildBat) {
     Push-Location $bridgeDir
     try {
-        & cmd.exe /c "build.bat"
+        & cmd.exe /c $buildBat
         if ($LASTEXITCODE -ne 0) { throw "Bridge build.bat returned error code $LASTEXITCODE" }
         Write-Host "[OK] Bridge DLL built" -ForegroundColor Green
     }
@@ -91,30 +90,10 @@ try {
 finally { Pop-Location }
 
 # -----------------------------------------------------------
-# Step 3: Publish InstallerHelper (single-file)
+# Step 3: Determine version
 # -----------------------------------------------------------
 Write-Host ""
-Write-Host "Step 3/4: Publishing InstallerHelper..." -ForegroundColor Yellow
-Write-Host "       dotnet publish $helperProj -c Release -r win-x64 --self-contained false"
-
-Push-Location $rootDir
-try {
-    & $dotnet publish $helperProj -c Release -r win-x64 --self-contained false --nologo
-    if ($LASTEXITCODE -ne 0) { throw "InstallerHelper publish failed" }
-
-    $helperPublishDir = Join-Path $rootDir "installer\NoiseReduction.InstallerHelper\bin\Release\net10.0-windows\win-x64\publish"
-    if (-not (Test-Path $helperPublishDir)) {
-        throw "InstallerHelper publish directory not found: $helperPublishDir"
-    }
-    Write-Host "[OK] InstallerHelper published" -ForegroundColor Green
-}
-finally { Pop-Location }
-
-# -----------------------------------------------------------
-# Step 4: Determine version
-# -----------------------------------------------------------
-Write-Host ""
-Write-Host "Step 4/4: Determining version..." -ForegroundColor Yellow
+Write-Host "Step 3/4: Determining version..." -ForegroundColor Yellow
 
 # Try latest Git tag first, fall back to 0.0.0
 # Use try/catch because $ErrorActionPreference=Stop treats native command stderr as terminating
@@ -129,10 +108,10 @@ try {
 }
 
 # -----------------------------------------------------------
-# Step 5: Run Inno Setup
+# Step 4: Run Inno Setup
 # -----------------------------------------------------------
 Write-Host ""
-Write-Host "Step 5/5: Compiling Inno Setup installer..." -ForegroundColor Yellow
+Write-Host "Step 4/4: Compiling Inno Setup installer..." -ForegroundColor Yellow
 
 $outputDir = Join-Path (Split-Path $issFile -Parent) "output"
 if (Test-Path $outputDir) {

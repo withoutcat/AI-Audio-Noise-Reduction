@@ -5,12 +5,10 @@ namespace NoiseReduction.Core.Logging;
 
 public enum LogLevel
 {
-    Verbose,
     Debug,
     Info,
     Warn,
-    Error,
-    Fatal
+    Error
 }
 
 public sealed class AppLogger
@@ -90,23 +88,15 @@ public sealed class AppLogger
 
     // ── Logging methods ─────────────────────────────────────────────
 
-    public void Verbose(string message) => Log(LogLevel.Verbose, message);
     public void Debug(string message) => Log(LogLevel.Debug, message);
     public void Info(string message) => Log(LogLevel.Info, message);
     public void Warn(string message) => Log(LogLevel.Warn, message);
     public void Error(string message) => Log(LogLevel.Error, message);
-    public void Fatal(string message) => Log(LogLevel.Fatal, message);
 
     /// <summary>Log an exception at Error level with full stack trace.</summary>
     public void Error(Exception ex, string? message = null)
     {
         Log(LogLevel.Error, FormatException(ex, message));
-    }
-
-    /// <summary>Log an exception at Fatal level with full stack trace.</summary>
-    public void Fatal(Exception ex, string? message = null)
-    {
-        Log(LogLevel.Fatal, FormatException(ex, message));
     }
 
     private static string FormatException(Exception ex, string? message)
