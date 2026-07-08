@@ -3,20 +3,13 @@
 # Runs on windows-latest (needed for WPF app + Inno Setup).
 #
 # Triggers:
-#   - Push to master          (build + upload artifact, no release)
-#   - Push tag v*.*.*         (build + publish release with auto-generated notes)
+#   - Push tag v*.*.*         (build + publish release)
 #   - workflow_dispatch       (manual build, upload artifact only)
 
 name: Build & Release
 
 on:
   push:
-    branches:
-      - master
-    paths:
-      - 'src/**'
-      - 'installer/**'
-      - '.github/workflows/**'
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
