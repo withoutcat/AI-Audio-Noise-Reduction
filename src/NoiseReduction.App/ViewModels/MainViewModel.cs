@@ -46,8 +46,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         ClearLogCommand = new RelayCommand(() =>
         {
             AppLogger.Instance.Clear();
-            LogText = "";
-            OnPropertyChanged(nameof(LogText));
+            LogEntries.Clear();
         });
         _statsTimer = new DispatcherTimer
         {
@@ -60,7 +59,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<AudioDeviceInfo> CaptureDevices { get; } = new();
-    public string LogText { get; private set; } = "";
+    public ObservableCollection<LogEntry> LogEntries { get; } = new();
 
     public AudioDeviceInfo? SelectedCaptureDevice
     {
@@ -339,17 +338,17 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (cableOutput == null)
             {
                 StatusMessage = "未检测到 VB-CABLE 虚拟设备。请先安装 VB-CABLE Virtual Audio Device。";
-                AppLogger.Instance.Verbose("错误: 未找到 CABLE Output 设备");
+                AppLogger.Instance.Error("未检测到 VB-CABLE 虚拟设备。请先安装 VB-CABLE Virtual Audio Device。");
                 return;
             }
 
             var renderDeviceName = CaptureToRenderDeviceName(cableOutput.Name);
-            AppLogger.Instance.Verbose($"虚拟设备: {cableOutput.Name} → 写入设备: {renderDeviceName}");
+            AppLogger.Instance.Debug($"虚拟设备: {cableOutput.Name} → 写入设备: {renderDeviceName}");
 
             var renderDevices = _deviceManager.GetRenderDevices().ToList();
-            AppLogger.Instance.Verbose($"系统输出设备(渲染设备)共 {renderDevices.Count} 个:");
+            AppLogger.Instance.Debug($"系统输出设备(渲染设备)共 {renderDevices.Count} 个:");
             foreach (var rd in renderDevices)
-                AppLogger.Instance.Verbose($"  - {rd.Name}");
+                AppLogger.Instance.Debug($"  - {rd.Name}");
 
             var renderDevice = renderDevices.FirstOrDefault(d =>
                 d.Name.Equals(renderDeviceName, StringComparison.OrdinalIgnoreCase))
@@ -359,11 +358,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             if (renderDevice is null)
             {
                 StatusMessage = $"未找到渲染设备: {renderDeviceName}。请检查虚拟麦克风设置。";
-                AppLogger.Instance.Verbose($"错误: 未找到渲染设备 {renderDeviceName}");
+                AppLogger.Instance.Error($"未找到渲染设备 {renderDeviceName}");
                 return;
             }
 
-            AppLogger.Instance.Verbose($"匹配到渲染设备: {renderDevice.Name}");
+            AppLogger.Instance.Debug($"匹配到渲染设备: {renderDevice.Name}");
 
             // Save and attempt to switch default recording device
             _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
@@ -373,7 +372,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 if (switched)
                     AppLogger.Instance.Info($"已将默认麦克风切换为: {cableOutput.Name}");
                 else
-                    AppLogger.Instance.Info("无法自动切换默认麦克风（系统限制），用户可在声音设置中手动选择");
+                    AppLogger.Instance.Warn("无法自动切换默认麦克风（系统限制），用户可在声音设置中手动选择");
             }
             else
             {
@@ -414,7 +413,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             else
             {
                 StatusMessage = $"启动失败: {ex.Message}";
-                AppLogger.Instance.Info($"错误: {ex.Message}");
+                AppLogger.Instance.Error($"启动失败: {ex.Message}");
             }
 
             RaiseStateChanged();
@@ -461,22 +460,17 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void OnLogEntryAdded(object? sender, LogEntry entry)
     {
-        bool showEntry = entry.Level == LogLevel.Info ||
-                         (_debugMode && (entry.Level == LogLevel.Verbose || entry.Level == LogLevel.Debug));
+        bool showEntry = entry.Level >= LogLevel.Info
+                         || (_debugMode && entry.Level == LogLevel.Debug);
         if (!showEntry) return;
 
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            var logLine = $"{entry.Message}\n";
-            LogText += logLine;
+            LogEntries.Add(entry);
 
-            var lines = LogText.Split('\n');
-            if (lines.Length > 200)
-            {
-                LogText = string.Join('\n', lines.Skip(lines.Length - 200));
-            }
-
-            OnPropertyChanged(nameof(LogText));
+            // Keep max 200 entries in the UI
+            while (LogEntries.Count > 200)
+                LogEntries.RemoveAt(0);
         });
     }
 

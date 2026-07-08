@@ -28,9 +28,9 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {
             if (args.ExceptionObject is Exception ex)
-                AppLogger.Instance.Fatal(ex, "未处理的应用程序级异常（进程即将终止）");
+                AppLogger.Instance.Error(ex, "未处理的应用程序级异常（进程即将终止）");
             else
-                AppLogger.Instance.Fatal($"未处理的应用程序级异常（进程即将终止）: {args.ExceptionObject}");
+                AppLogger.Instance.Error($"未处理的应用程序级异常（进程即将终止）: {args.ExceptionObject}");
         };
 
         DispatcherUnhandledException += (_, args) =>
