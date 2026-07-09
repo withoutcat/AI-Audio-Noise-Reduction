@@ -80,9 +80,6 @@ Source: "{#AppPublishDir}\NAudio.WinMM.dll";                   DestDir: "{app}";
 ; === Native DLLs (native\ subdirectory) ===
 Source: "{#AppPublishDir}\native\*.dll"; DestDir: "{app}\native"; Flags: ignoreversion
 
-; === Default config (don't overwrite user edits on upgrade) ===
-Source: "assets\config.default.json"; DestDir: "{app}"; DestName: "config.json"; Flags: ignoreversion onlyifdoesntexist
-
 ; === Application icon (for shortcuts) ===
 Source: "{#AppPublishDir}\application.ico"; DestDir: "{app}"; Flags: ignoreversion
 

@@ -95,7 +95,9 @@ jobs:
       # Step 3: Compile Inno Setup installer
       # ---------------------------------------------------------------
       - name: Install Inno Setup
-        run: choco install innosetup --version=6.3.3 -y --no-progress
+        run: |
+          where iscc >nul 2>&1
+          if %ERRORLEVEL% neq 0 choco install innosetup -y --no-progress
         shell: cmd
 
       - name: Compile installer
