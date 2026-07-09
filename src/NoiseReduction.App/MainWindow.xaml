@@ -24,10 +24,15 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <TextBlock Text="𝔸𝕀 ℕ𝕠𝕚𝕤𝕖 𝕊𝕦𝕡𝕡𝕣𝕖𝕤𝕤𝕚𝕠𝕟"
-                   FontSize="22"
-                   FontWeight="SemiBold"
-                   Foreground="#E84393" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+            <Image Source="Assets/logo.png" Width="32" Height="32" RenderOptions.BitmapScalingMode="HighQuality" />
+            <TextBlock Text="𝔸𝕀 ℕ𝕠𝕚𝕤𝕖 𝕊𝕦𝕡𝕡𝕣𝕖𝕤𝕤𝕚𝕠𝕟"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Foreground="#E84393"
+                       Margin="8,0,0,0"
+                       VerticalAlignment="Center" />
+        </StackPanel>
         <Button Content="×"
                 Width="24"
                 Height="24"
@@ -167,17 +172,27 @@
                 <CheckBox DockPanel.Dock="Right"
                           Content="调试"
                           IsChecked="{Binding DebugMode}"
-                          Margin="0,0,8,0"
+                          Margin="0,0,4,0"
                           VerticalAlignment="Center"
-                          FontSize="12"
-                          MinHeight="24" />
+                          FontSize="12" />
                 <Button DockPanel.Dock="Right"
-                        Content="清除"
-                        Command="{Binding ClearLogCommand}"
-                        MinWidth="48"
-                        MinHeight="24"
-                        Padding="6,0"
-                        FontSize="12" />
+                        ToolTip="清除日志"
+                        Width="24"
+                        Height="24"
+                        Padding="0"
+                        Margin="0,0,1,0"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Command="{Binding ClearLogCommand}">
+                    <Button.ContentTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="🗑" FontSize="14" Foreground="#6A737D" />
+                        </DataTemplate>
+                    </Button.ContentTemplate>
+                </Button>
             </DockPanel>
 
             <RichTextBox Grid.Row="1"

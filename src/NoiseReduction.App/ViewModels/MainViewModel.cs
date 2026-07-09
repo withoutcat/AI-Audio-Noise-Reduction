@@ -47,6 +47,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             AppLogger.Instance.Clear();
             LogEntries.Clear();
+            LogCleared?.Invoke();
         });
         _statsTimer = new DispatcherTimer
         {
@@ -188,6 +189,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public RelayCommand ToggleCommand { get; }
     public RelayCommand ClearLogCommand { get; }
+    public event Action? LogCleared;
 
     /// <summary>
     /// Opens the AppID verification dialog.

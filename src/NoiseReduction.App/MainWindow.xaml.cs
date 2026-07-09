@@ -30,6 +30,14 @@ public partial class MainWindow : Window
                 }
             };
 
+            // Clear RichTextBox when log is cleared
+            vm.LogCleared += () =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    LogRichTextBox.Document.Blocks.Clear();
+                });
+            };
             // Observe DebugMode changes → toggle selection/copy ability
             vm.PropertyChanged += (s, e) =>
             {
