@@ -404,11 +404,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             _isActive = false;
             _statsTimer.Stop();
 
-            // If init failed because AppID is invalid, clear it back to unverified
+            // If init failed because AppID is invalid, warn but keep it — user can retry
             if (ex.Message.StartsWith("初始化失败", StringComparison.Ordinal) && HasAppId)
             {
-                AppLogger.Instance.Info("AppID 无效，已清除，请重新配置");
-                AppId = "";  // clears config + UI
+                AppLogger.Instance.Error($"AppID 验证失败，请确认 AppID 是否正确: {ex.Message}");
+                StatusMessage = "AppID 验证失败，请重新配置。";
             }
             else
             {

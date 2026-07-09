@@ -1,19 +1,32 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace NoiseReduction.App.Services;
 
+/// <summary>
+/// Application configuration persisted to %LOCALAPPDATA%\AINoiseReduction\config.json.
+///
+/// Save behavior: reads existing JSON, patches only the fields we own, and writes back
+/// preserving any unknown keys. This avoids silently wiping settings added by future versions
+/// or other tools.
+/// </summary>
 public sealed class AppConfig
 {
     private static readonly string ConfigPath = Path.Combine(
-        AppDomain.CurrentDomain.BaseDirectory, "config.json");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "AINoiseReduction",
+        "config.json");
 
+    // ── Owned fields ─────────────────────────────────────────────────
     public string? AppId { get; set; }
     public string? LastCaptureDeviceName { get; set; }
     public int LastAinsMode { get; set; }
     public bool DebugMode { get; set; }
     /// <summary>Name of the virtual audio device installed by our installer (e.g. "CABLE Output").</summary>
     public string VirtualMicphoneName { get; set; } = "CABLE Output";
+
+    // ── Load ─────────────────────────────────────────────────────────
 
     public static AppConfig Load()
     {
@@ -23,7 +36,19 @@ public sealed class AppConfig
         try
         {
             var json = File.ReadAllText(ConfigPath);
-            return JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
+            var node = JsonNode.Parse(json);
+            if (node is JsonObject obj)
+            {
+                return new AppConfig
+                {
+                    AppId = (string?)obj["AppId"],
+                    LastCaptureDeviceName = (string?)obj["LastCaptureDeviceName"],
+                    LastAinsMode = (int?)obj["LastAinsMode"] ?? 0,
+                    DebugMode = (bool?)obj["DebugMode"] ?? false,
+                    VirtualMicphoneName = (string?)obj["VirtualMicphoneName"] ?? "CABLE Output",
+                };
+            }
+            return new AppConfig();
         }
         catch
         {
@@ -31,19 +56,53 @@ public sealed class AppConfig
         }
     }
 
+    // ── Save (merge) ─────────────────────────────────────────────────
+
     public void Save()
     {
         try
         {
-            var json = JsonSerializer.Serialize(this, new JsonSerializerOptions
+            var dir = Path.GetDirectoryName(ConfigPath)!;
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            // Read existing JSON (if any) to preserve unknown fields
+            JsonObject root;
+            if (File.Exists(ConfigPath))
             {
-                WriteIndented = true
-            });
+                try
+                {
+                    root = (JsonNode.Parse(File.ReadAllText(ConfigPath)) as JsonObject) ?? new JsonObject();
+                }
+                catch
+                {
+                    root = new JsonObject();
+                }
+            }
+            else
+            {
+                root = new JsonObject();
+            }
+
+            // Merge our fields
+            root["AppId"] = AppId;
+            root["LastCaptureDeviceName"] = LastCaptureDeviceName;
+            root["LastAinsMode"] = LastAinsMode;
+            root["DebugMode"] = DebugMode;
+            root["VirtualMicphoneName"] = VirtualMicphoneName;
+
+            var json = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(ConfigPath, json);
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail - config save is non-critical
+            // Log to debug output and AppLogger if available
+            System.Diagnostics.Debug.WriteLine($"AppConfig.Save failed: {ex.Message}");
+            try
+            {
+                Core.Logging.AppLogger.Instance.Warn($"配置文件保存失败: {ex.Message}");
+            }
+            catch { }
         }
     }
 }
