@@ -1,4 +1,4 @@
-# AI Audio Noise Reduction
+# 𝔸𝕀 ℕ𝕠𝕚𝕤𝕖 𝕊𝕦𝕡𝕡𝕣𝕖𝕤𝕤𝕚𝕠𝕟
 
 [English](./README.md) · **简体中文**
 
