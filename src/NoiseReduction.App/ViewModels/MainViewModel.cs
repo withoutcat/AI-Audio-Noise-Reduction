@@ -182,7 +182,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public string VersionText => "v" +
         (typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.0.0");
 
-    public string TopMostTooltip => _isTopMost ? "取消置顶" : "置顶窗口";
+    public string TopMostTooltip => _isTopMost ? "放我下来" : "把我举高高";
     public string TopMostIcon => _isTopMost ? "📌" : "📍";
 
     public string ResourceText
