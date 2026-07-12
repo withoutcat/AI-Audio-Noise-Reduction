@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="AI Noise Reduction"
-        Width="236" Height="40"
+        Width="256" Height="40"
         WindowStyle="None"
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"
@@ -18,7 +18,7 @@
     <Grid Margin="6,2">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <!-- Logo -->
-            <Image Source="Assets/logo.png" Width="16" Height="16"
+            <Image Source="Assets/logo.png" Width="22" Height="22"
                    RenderOptions.BitmapScalingMode="HighQuality"
                    VerticalAlignment="Center" />
 
@@ -53,6 +53,13 @@
                     Click="OnExpandClick" ToolTip="展开主窗口"
                     Background="Transparent" BorderThickness="0"
                     FontSize="16" Cursor="Hand"
+                    VerticalAlignment="Center" />
+
+            <!-- Minimize to tray -->
+            <Button Content="➖" Width="20" Height="20" Padding="0"
+                    Click="OnMinimizeToTrayClick" ToolTip="最小化到托盘"
+                    Background="Transparent" BorderThickness="0"
+                    FontSize="10" Cursor="Hand"
                     VerticalAlignment="Center" />
         </StackPanel>
     </Grid>
