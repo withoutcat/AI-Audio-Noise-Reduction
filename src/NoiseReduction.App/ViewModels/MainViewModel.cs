@@ -198,7 +198,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public void OpenAppIdDialog()
     {
         var dialog = new Views.AppIdDialog(_appId);
-        dialog.Owner = System.Windows.Application.Current?.MainWindow;
+        var owner = System.Windows.Application.Current?.Windows
+            .Cast<System.Windows.Window>()
+            .FirstOrDefault(w => w.IsVisible);
+        dialog.Owner = owner;
         if (dialog.ShowDialog() == true && dialog.WasVerified)
         {
             if (dialog.VerifiedAppId == "")

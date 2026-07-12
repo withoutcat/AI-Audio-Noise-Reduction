@@ -24,28 +24,33 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-            <Image Source="Assets/logo.png" Width="32" Height="32" RenderOptions.BitmapScalingMode="HighQuality" />
-            <TextBlock Text="𝔸𝕀 ℕ𝕠𝕚𝕤𝕖 𝕊𝕦𝕡𝕡𝕣𝕖𝕤𝕤𝕚𝕠𝕟"
-                       FontSize="22"
-                       FontWeight="SemiBold"
-                       Foreground="#E84393"
-                       Margin="8,0,0,0"
-                       VerticalAlignment="Center" />
-        </StackPanel>
-        <Button Content="×"
-                Width="24"
-                Height="24"
-                Padding="0"
-                FontSize="14"
-                FontWeight="Bold"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Margin="0,-4,-4,0"
-                Background="Transparent"
-                BorderThickness="0"
-                Cursor="Hand"
-                Click="OnCloseClick" />
+        <Grid Margin="0,0,0,4">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="Assets/logo.png" Width="32" Height="32" RenderOptions.BitmapScalingMode="HighQuality" />
+                <TextBlock Text="𝔸𝕀 ℕ𝕠𝕚𝕤𝕖 𝕊𝕦𝕡𝕡𝕣𝕖𝕤𝕤𝕚𝕠𝕟"
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           Foreground="#E84393"
+                           Margin="8,0,0,0"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Window control buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <Button Content="❐"
+                        Width="24" Height="24" Padding="0"
+                        FontSize="16  "
+                        Background="Transparent" BorderThickness="0"
+                        Cursor="Hand" ToolTip="切换小窗口模式"
+                        Click="OnMiniBarClick" />
+                <Button Content="➖"
+                        Width="24" Height="24" Padding="0"
+                        FontSize="10"
+                        Background="Transparent" BorderThickness="0"
+                        Cursor="Hand" ToolTip="最小化到托盘"
+                        Click="OnMinimizeToTrayClick" />
+            </StackPanel>
+        </Grid>
 
         <!-- Device Selection -->
         <Grid Grid.Row="1"
@@ -235,30 +240,10 @@
                            Margin="0,0,8,0"
                            MouseDown="OnAppIdClick"
                            Text="{Binding ConnectivityText}" />
-                <Button MinWidth="84"
-                        MinHeight="30"
-                        Padding="10,0"
-                        FontSize="13"
-                        ToolTipService.ShowOnDisabled="True"
+                <Button Style="{StaticResource StartStopButtonStyle}"
                         ToolTip="{Binding StartButtonTooltip}"
                         Command="{Binding ToggleCommand}"
-                        Content="{Binding ToggleButtonText}">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-                            <Setter Property="Foreground" Value="White" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding ToggleButtonText}" Value="停止">
-                                    <Setter Property="Background" Value="#E74C3C" />
-                                </DataTrigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Foreground" Value="#333333" />
-                                    <Setter Property="Background" Value="#E0E0E0" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
+                        Content="{Binding ToggleButtonText}" />
             </StackPanel>
         </DockPanel>
     </Grid>

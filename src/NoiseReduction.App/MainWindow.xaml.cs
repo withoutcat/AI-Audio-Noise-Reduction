@@ -1,10 +1,12 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using NoiseReduction.App.ViewModels;
 using NoiseReduction.Core.Logging;
+using SWM = System.Windows.Media;
+using SWI = System.Windows.Input;
 
 namespace NoiseReduction.App;
 
@@ -13,9 +15,12 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = new MainViewModel();
 
-        if (DataContext is MainViewModel vm)
+        var app = System.Windows.Application.Current as App;
+        var vm = app?.ViewModel;
+        DataContext = vm;
+
+        if (vm != null)
         {
             // Append colored log entries to RichTextBox
             vm.LogEntries.CollectionChanged += (s, e) =>
@@ -38,6 +43,7 @@ public partial class MainWindow : Window
                     LogRichTextBox.Document.Blocks.Clear();
                 });
             };
+
             // Observe DebugMode changes → toggle selection/copy ability
             vm.PropertyChanged += (s, e) =>
             {
@@ -54,10 +60,10 @@ public partial class MainWindow : Window
         var doc = LogRichTextBox.Document;
         var color = entry.Level switch
         {
-            LogLevel.Debug => Color.FromRgb(0x6A, 0x73, 0x7D),
-            LogLevel.Warn  => Color.FromRgb(0xF0, 0xC0, 0x40),
-            LogLevel.Error => Color.FromRgb(0xE7, 0x4C, 0x3C),
-            _              => Color.FromRgb(0x20, 0x20, 0x20)
+            LogLevel.Debug => SWM.Color.FromRgb(0x6A, 0x73, 0x7D),
+            LogLevel.Warn  => SWM.Color.FromRgb(0xF0, 0xC0, 0x40),
+            LogLevel.Error => SWM.Color.FromRgb(0xE7, 0x4C, 0x3C),
+            _              => SWM.Color.FromRgb(0x20, 0x20, 0x20)
         };
 
         var paragraph = new Paragraph
@@ -66,7 +72,7 @@ public partial class MainWindow : Window
             Padding = new Thickness(0),
             LineHeight = 1
         };
-        paragraph.Inlines.Add(new Run(entry.Message) { Foreground = new SolidColorBrush(color) });
+        paragraph.Inlines.Add(new Run(entry.Message) { Foreground = new SWM.SolidColorBrush(color) });
         doc.Blocks.Add(paragraph);
 
         // Trim old entries to keep max 200
@@ -80,11 +86,9 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainViewModel vm)
         {
-            // Only allow focus (and thus text selection) when debug mode is on
             LogRichTextBox.Focusable = vm.DebugMode;
-            LogRichTextBox.Cursor = vm.DebugMode ? Cursors.IBeam : Cursors.Arrow;
+            LogRichTextBox.Cursor = vm.DebugMode ? SWI.Cursors.IBeam : SWI.Cursors.Arrow;
 
-            // If debug mode was just turned OFF and the RTB has focus, move focus away
             if (!vm.DebugMode && LogRichTextBox.IsFocused)
             {
                 LogRichTextBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
@@ -99,9 +103,19 @@ public partial class MainWindow : Window
             DragMove();
     }
 
-    private void OnCloseClick(object sender, RoutedEventArgs e)
+    private void OnMiniBarClick(object sender, RoutedEventArgs e)
     {
-        Close();
+        (System.Windows.Application.Current as App)?.ShowMiniBar();
+    }
+
+    private void OnMinimizeToTrayClick(object sender, RoutedEventArgs e)
+    {
+        (System.Windows.Application.Current as App)?.MinimizeToTray();
+    }
+
+    private void OnCloseToTrayClick(object sender, RoutedEventArgs e)
+    {
+        (System.Windows.Application.Current as App)?.MinimizeToTray();
     }
 
     private void OnAppIdClick(object sender, MouseButtonEventArgs e)
@@ -116,7 +130,6 @@ public partial class MainWindow : Window
     {
         if (Environment.OSVersion.Version.Build >= 22000)
         {
-            // Windows 11: ms-settings URIs require UseShellExecute=true
             Process.Start(new ProcessStartInfo
             {
                 FileName = "ms-settings:sound-input",
@@ -125,18 +138,18 @@ public partial class MainWindow : Window
         }
         else
         {
-            // Windows 10 and below: legacy Control Panel → Recording tab
             Process.Start("control.exe", "mmsys.cpl,,1");
         }
     }
 
-    protected override void OnClosed(EventArgs e)
+    protected override void OnClosing(CancelEventArgs e)
     {
-        if (DataContext is IDisposable disposable)
+        var app = System.Windows.Application.Current as App;
+        if (app != null && !app.IsExiting)
         {
-            disposable.Dispose();
+            e.Cancel = true;
+            app.MinimizeToTray();
         }
-
-        base.OnClosed(e);
+        base.OnClosing(e);
     }
 }
