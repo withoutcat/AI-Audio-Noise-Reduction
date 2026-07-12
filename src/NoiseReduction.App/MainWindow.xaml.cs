@@ -108,6 +108,15 @@ public partial class MainWindow : Window
         (System.Windows.Application.Current as App)?.ShowMiniBar();
     }
 
+    private void OnTopMostClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            vm.ToggleTopMost();
+            Topmost = vm.IsTopMost;
+        }
+    }
+
     private void OnMinimizeToTrayClick(object sender, RoutedEventArgs e)
     {
         (System.Windows.Application.Current as App)?.MinimizeToTray();

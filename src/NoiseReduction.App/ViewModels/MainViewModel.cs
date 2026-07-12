@@ -24,6 +24,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private int _ainsMode = 0;
     private bool _isActive;  // true when starting or running (controls button state)
     private bool _debugMode;
+    private bool _isTopMost;
     private string _statusMessage = "选择麦克风，然后点击开始。";
     private string _appId = "";
     private string? _originalDefaultMicId;
@@ -177,6 +178,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public string DeviceWarningText => $"⚠ 建议将 {_config.VirtualMicphoneName} 设为默认麦克风";
+
+    public string VersionText => "v" +
+        (typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.0.0");
+
+    public string TopMostTooltip => _isTopMost ? "取消置顶" : "置顶窗口";
 
     public string ResourceText
     {
@@ -504,6 +510,15 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     private bool CanToggle() => _isActive || (SelectedCaptureDevice is not null && HasAppId);
+
+    public void ToggleTopMost()
+    {
+        _isTopMost = !_isTopMost;
+        OnPropertyChanged(nameof(TopMostTooltip));
+        OnPropertyChanged(nameof(IsTopMost));
+    }
+
+    public bool IsTopMost => _isTopMost;
 
     private void RaiseStateChanged()
     {
