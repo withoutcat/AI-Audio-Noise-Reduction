@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="AI Noise Reduction"
-        Width="210" Height="40"
+        Width="236" Height="40"
         WindowStyle="None"
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"
@@ -41,18 +41,18 @@
                     Command="{Binding ToggleCommand}"
                     Content="{Binding ToggleButtonText}" />
 
+            <!-- Top most -->
+            <Button Content="{Binding TopMostIcon}" Width="20" Height="20" Padding="0"
+                    Click="OnTopMostClick" ToolTip="{Binding TopMostTooltip}"
+                    Background="Transparent" BorderThickness="0"
+                    FontSize="12" Cursor="Hand"
+                    VerticalAlignment="Center" />
+
             <!-- Expand to main window -->
             <Button Content="⛶" Width="20" Height="20" Padding="0"
                     Click="OnExpandClick" ToolTip="展开主窗口"
                     Background="Transparent" BorderThickness="0"
                     FontSize="16" Cursor="Hand"
-                    VerticalAlignment="Center" />
-
-            <!-- Minimize to tray -->
-            <Button Content="➖" Width="20" Height="20" Padding="0"
-                    Click="OnMinimizeToTrayClick" ToolTip="最小化到托盘"
-                    Background="Transparent" BorderThickness="0"
-                    FontSize="8" Cursor="Hand"
                     VerticalAlignment="Center" />
         </StackPanel>
     </Grid>

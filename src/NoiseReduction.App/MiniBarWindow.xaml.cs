@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using NoiseReduction.App.ViewModels;
 
 namespace NoiseReduction.App;
 
@@ -16,6 +17,15 @@ public partial class MiniBarWindow : Window
     {
         if (e.LeftButton == MouseButtonState.Pressed)
             DragMove();
+    }
+
+    private void OnTopMostClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            vm.ToggleTopMost();
+            Topmost = vm.IsTopMost;
+        }
     }
 
     private void OnExpandClick(object sender, RoutedEventArgs e)

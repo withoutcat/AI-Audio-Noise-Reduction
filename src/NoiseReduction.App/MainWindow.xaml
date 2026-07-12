@@ -49,7 +49,7 @@
                         Width="24" Height="24" Padding="0"
                         FontSize="16"
                         Background="Transparent" BorderThickness="0"
-                        Cursor="Hand" ToolTip="切换小窗口模式"
+                        Cursor="Hand" ToolTip="变猫条"
                         Click="OnMiniBarClick" />
                 <Button Content="➖"
                         Width="24" Height="24" Padding="0"
