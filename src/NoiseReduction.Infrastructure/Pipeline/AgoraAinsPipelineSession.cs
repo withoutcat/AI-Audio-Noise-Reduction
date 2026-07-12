@@ -53,6 +53,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
 
     private long _totalFramesProcessed;
     private long _totalBytesProcessed;
+    private byte[]? _pcmBuffer;
 
     public bool IsRunning { get; private set; }
     public long TotalFramesProcessed => _totalFramesProcessed;
@@ -341,10 +342,14 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     {
         // SDK now delivers 48kHz stereo PCM directly — no conversion needed.
         int byteCount = samplesPerChannel * channels * bytesPerSample;
-        var pcm = new byte[byteCount];
-        Marshal.Copy(buffer, pcm, 0, byteCount);
 
-        _bufferProvider?.AddSamples(pcm, 0, byteCount);
+        // Reuse buffer to avoid per-frame allocation (50 fps → 192 KB/s GC pressure)
+        if (_pcmBuffer == null || _pcmBuffer.Length != byteCount)
+            _pcmBuffer = new byte[byteCount];
+
+        Marshal.Copy(buffer, _pcmBuffer, 0, byteCount);
+
+        _bufferProvider?.AddSamples(_pcmBuffer, 0, byteCount);
         _totalFramesProcessed++;
         _totalBytesProcessed += byteCount;
     }
