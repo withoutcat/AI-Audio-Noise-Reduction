@@ -183,6 +183,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         (typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.0.0");
 
     public string TopMostTooltip => _isTopMost ? "取消置顶" : "置顶窗口";
+    public string TopMostIcon => _isTopMost ? "📌" : "📍";
 
     public string ResourceText
     {
@@ -515,6 +516,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         _isTopMost = !_isTopMost;
         OnPropertyChanged(nameof(TopMostTooltip));
+        OnPropertyChanged(nameof(TopMostIcon));
         OnPropertyChanged(nameof(IsTopMost));
     }
 

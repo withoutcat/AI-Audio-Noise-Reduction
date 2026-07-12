@@ -39,7 +39,7 @@
 
             <!-- Window control buttons -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                <Button Content="📌"
+                <Button Content="{Binding TopMostIcon}"
                         Width="24" Height="24" Padding="0"
                         FontSize="14"
                         Background="Transparent" BorderThickness="0"
@@ -80,7 +80,7 @@
                 <TextBlock Text="需降噪设备"
                            FontSize="14"
                            VerticalAlignment="Center"
-                           ToolTip="选择需要进行AI降噪处理的麦克风设备。软件将通过声网SDK采集该设备的音频流，经过AI降噪处理后输出到虚拟麦克风（VB-CABLE）。" />
+                           ToolTip="选择需要进行AI降噪处理的麦克风设备，降噪后的音频将从CABLE Output输出" />
             </StackPanel>
             <ComboBox Grid.Row="0"
                       Grid.Column="1"
@@ -90,16 +90,15 @@
                       SelectedItem="{Binding SelectedCaptureDevice}"
                       DisplayMemberPath="Name" />
 
-            <!-- 2. 降噪等级 -->
+            <!-- 2. 降噪模式 -->
             <StackPanel Grid.Row="1"
                         Grid.Column="0"
                         Margin="0,14,0,0"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
-                <TextBlock Text="降噪等级"
+                <TextBlock Text="降噪模式"
                            FontSize="14"
-                           VerticalAlignment="Center"
-                           ToolTip="选择AI降噪强度：&#x0a;均衡（0）- 适合日常使用，平衡降噪效果和音质&#x0a;强力（1）- 适合嘈杂环境，最大限度消除背景噪音&#x0a;超低延迟（2）- 适合实时合唱等对延迟敏感的场景" />
+                           VerticalAlignment="Center" />
             </StackPanel>
             <ComboBox Grid.Row="1"
                       Grid.Column="1"
@@ -108,9 +107,9 @@
                       FontSize="14"
                       SelectedValue="{Binding AinsMode}"
                       SelectedValuePath="Tag">
-                <ComboBoxItem Content="均衡 - 适合日常使用" Tag="0" />
-                <ComboBoxItem Content="强力 - 适合嘈杂环境" Tag="1" />
-                <ComboBoxItem Content="超低延迟 - 适合实时合唱" Tag="2" />
+                <ComboBoxItem Content="均衡 - 适合日常使用" Tag="0" ToolTip="适合日常使用，平衡降噪效果和音质" />
+                <ComboBoxItem Content="强力 - 适合嘈杂环境" Tag="1" ToolTip="适合嘈杂环境，最大限度消除背景噪音" />
+                <ComboBoxItem Content="超低延迟 - 适合实时合唱" Tag="2" ToolTip="适合实时合唱等对延迟敏感的场景" />
             </ComboBox>
         </Grid>
 
@@ -171,7 +170,8 @@
                           IsChecked="{Binding DebugMode}"
                           Margin="0,0,4,0"
                           VerticalAlignment="Center"
-                          FontSize="12" />
+                          FontSize="12" 
+                          ToolTip="调试模式会显示更详细的日志信息" />
                 <Button DockPanel.Dock="Right"
                         ToolTip="清除日志"
                         Width="24"
