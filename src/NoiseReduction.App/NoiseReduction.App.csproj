@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -10,6 +10,7 @@
     <ApplicationIcon>Assets\application.ico</ApplicationIcon>
     <BridgeDir>$(MSBuildThisFileDirectory)..\NoiseReduction.Bridge\bin\</BridgeDir>
     <SdkDir>$(MSBuildThisFileDirectory)..\..\res\sdk\Shengwang_Native_SDK_for_Windows_FULL\sdk\</SdkDir>
+    <AdcDir>$(MSBuildThisFileDirectory)..\..\res\tools\AudioDeviceCmdlets\</AdcDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -64,4 +65,9 @@
     <Delete Files="$(OutputPath)libagora-wgc.dll" Condition="Exists('$(OutputPath)libagora-wgc.dll')" />
     <Delete Files="$(OutputPath)glfw3.dll" Condition="Exists('$(OutputPath)glfw3.dll')" />
   </Target>
+
+  <!-- AudioDeviceCmdlets for system microphone switching -->
+  <ItemGroup>
+    <None Include="$(AdcDir)*.dll" Link="native\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -18,15 +18,16 @@ public sealed class AppConfig
         "AINoiseReduction",
         "config.json");
 
-    // ── Owned fields ─────────────────────────────────────────────────
+    // ── Owned fields ───────────────────────────────────────────────────
     public string? AppId { get; set; }
     public string? LastCaptureDeviceName { get; set; }
     public int LastAinsMode { get; set; }
     public bool DebugMode { get; set; }
+    public bool AutoSwitchMic { get; set; }
     /// <summary>Name of the virtual audio device installed by our installer (e.g. "CABLE Output").</summary>
     public string VirtualMicphoneName { get; set; } = "CABLE Output";
 
-    // ── Load ─────────────────────────────────────────────────────────
+    // ── Load ───────────────────────────────────────────────────────────
 
     public static AppConfig Load()
     {
@@ -45,6 +46,7 @@ public sealed class AppConfig
                     LastCaptureDeviceName = (string?)obj["LastCaptureDeviceName"],
                     LastAinsMode = (int?)obj["LastAinsMode"] ?? 0,
                     DebugMode = (bool?)obj["DebugMode"] ?? false,
+                    AutoSwitchMic = (bool?)obj["AutoSwitchMic"] ?? false,
                     VirtualMicphoneName = (string?)obj["VirtualMicphoneName"] ?? "CABLE Output",
                 };
             }
@@ -56,7 +58,7 @@ public sealed class AppConfig
         }
     }
 
-    // ── Save (merge) ─────────────────────────────────────────────────
+    // ── Save (merge) ───────────────────────────────────────────────────
 
     public void Save()
     {
@@ -89,6 +91,7 @@ public sealed class AppConfig
             root["LastCaptureDeviceName"] = LastCaptureDeviceName;
             root["LastAinsMode"] = LastAinsMode;
             root["DebugMode"] = DebugMode;
+            root["AutoSwitchMic"] = AutoSwitchMic;
             root["VirtualMicphoneName"] = VirtualMicphoneName;
 
             var json = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
@@ -106,3 +109,4 @@ public sealed class AppConfig
         }
     }
 }
+

@@ -1,4 +1,4 @@
-<Window x:Class="NoiseReduction.App.MainWindow"
+﻿<Window x:Class="NoiseReduction.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
@@ -66,6 +66,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="120" />
@@ -111,48 +112,28 @@
                 <ComboBoxItem Content="强力 - 适合嘈杂环境" Tag="1" ToolTip="适合嘈杂环境，最大限度消除背景噪音" />
                 <ComboBoxItem Content="超低延迟 - 适合实时合唱" Tag="2" ToolTip="适合实时合唱等对延迟敏感的场景" />
             </ComboBox>
+
+            <!-- 3. 自动切换麦克风 -->
+            <!-- <StackPanel Grid.Row="2"
+                        Grid.Column="0"
+                        Margin="0,14,0,0"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <TextBlock Text="自动切换"
+                           FontSize="14"
+                           VerticalAlignment="Center"
+                           ToolTip="勾选后，开始降噪时自动将系统默认麦克风切换为虚拟麦克风，停止时恢复" />
+            </StackPanel> -->
+            <CheckBox Grid.Row="2"
+                      Grid.Column="1"
+                      Margin="0,14,0,0"
+                      VerticalAlignment="Center"
+                      Content="自动切换麦克风"
+                      IsChecked="{Binding AutoSwitchMic, Mode=TwoWay}"
+                      FontSize="14"
+                      ToolTip="开始降噪时自动切换系统默认麦克风到虚拟麦克风，停止时恢复原麦克风" />
         </Grid>
 
-        <!-- Default Device Warning -->
-        <Border Grid.Row="2"
-                Margin="0,10,0,0"
-                Padding="8,6"
-                Background="#FFF8E1"
-                BorderBrush="#F0C040"
-                BorderThickness="1"
-                CornerRadius="3">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding ShowDeviceWarning}" Value="True">
-                            <Setter Property="Visibility" Value="Visible" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0"
-                           FontSize="12"
-                           Foreground="#8D6E00"
-                           VerticalAlignment="Center"
-                           TextTrimming="CharacterEllipsis"
-                           Text="{Binding DeviceWarningText}" />
-                <Button Grid.Column="1"
-                        Content="去设置"
-                        MinWidth="56"
-                        MinHeight="24"
-                        Padding="8,0"
-                        Margin="8,0,0,0"
-                        FontSize="12"
-                        Cursor="Hand"
-                        Click="OnOpenSoundSettings" />
-            </Grid>
-        </Border>
 
         <!-- Log Panel -->
         <Grid Grid.Row="3"

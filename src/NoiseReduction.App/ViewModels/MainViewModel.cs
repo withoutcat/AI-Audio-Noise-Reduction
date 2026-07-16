@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -25,6 +25,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _isActive;  // true when starting or running (controls button state)
     private bool _debugMode;
     private bool _isTopMost;
+    private bool _autoSwitchMic;
     private string _statusMessage = "选择麦克风，然后点击开始。";
     private string _appId = "";
     private string? _originalDefaultMicId;
@@ -41,6 +42,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _config = AppConfig.Load();
         _appId = _config.AppId ?? "";
         _debugMode = _config.DebugMode;
+        _autoSwitchMic = _config.AutoSwitchMic;
         _ainsMode = _config.LastAinsMode;
     
         ToggleCommand = new RelayCommand(Toggle, CanToggle);
@@ -132,6 +134,34 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public bool AutoSwitchMic
+    {
+        get => _autoSwitchMic;
+        set
+        {
+            if (SetField(ref _autoSwitchMic, value))
+            {
+                _config.AutoSwitchMic = value;
+                _config.Save();
+
+                // Handle runtime toggling while denoising is active
+                if (IsRunning)
+                {
+                    if (value)
+                    {
+                        // User just enabled auto-switch while running → switch to CABLE Output
+                        SwitchToCableOutput();
+                    }
+                    else
+                    {
+                        // User just disabled auto-switch while running → restore original mic
+                        RestoreOriginalMic();
+                    }
+                }
+            }
+        }
+    }
+
     public string AppId
     {
         get => _appId;
@@ -162,7 +192,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public bool ShowDeviceWarning { get; private set; }
 
     public string VirtualMicphoneName => _config.VirtualMicphoneName;
 
@@ -177,7 +206,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public string DeviceWarningText => $"⚠ 建议将 {_config.VirtualMicphoneName} 设为默认麦克风";
 
     public string VersionText => "v" +
         (typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.0.0");
@@ -262,7 +290,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged(nameof(DebugMode));
 
             // Check if virtual device (CABLE Output) is the system default recording device
-            CheckDefaultDevice();
 
             StatusMessage = $"发现 {CaptureDevices.Count} 个麦克风。";
         }
@@ -276,31 +303,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private void CheckDefaultDevice()
-    {
-        try
-        {
-            using var enumerator = new MMDeviceEnumerator();
-            var defaultMic = enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Console);
-            var isDefault = defaultMic.FriendlyName.StartsWith(_config.VirtualMicphoneName, StringComparison.OrdinalIgnoreCase);
-            UpdateDeviceWarning(isDefault);
-        }
-        catch
-        {
-            UpdateDeviceWarning(false);
-        }
-    }
-
-    private void UpdateDeviceWarning(bool isCableOutputDefault)
-    {
-        // Warning only shows when denoising is RUNNING AND default mic ≠ CABLE Output
-        var shouldShow = _isActive && !isCableOutputDefault;
-        if (ShowDeviceWarning != shouldShow)
-        {
-            ShowDeviceWarning = shouldShow;
-            OnPropertyChanged(nameof(ShowDeviceWarning));
-        }
-    }
 
     private async void Toggle()
     {
@@ -376,34 +378,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
             AppLogger.Instance.Debug($"匹配到渲染设备: {renderDevice.Name}");
 
-            // Save and attempt to switch default recording device
+            // Save original mic ID for later restoration
             _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
-            if (_originalDefaultMicId != null)
-            {
-                var switched = AudioDeviceUtility.TrySetDefaultCaptureDevice(cableOutput.Id);
-                if (switched)
-                    AppLogger.Instance.Info($"已将默认麦克风切换为: {cableOutput.Name}");
-                else
-                    AppLogger.Instance.Warn("无法自动切换默认麦克风（系统限制），用户可在声音设置中手动选择");
-            }
-            else
-            {
-                AppLogger.Instance.Info("无法读取当前默认麦克风，跳过自动切换");
-            }
 
-            // Create session and immediately update UI
-            _session = new AgoraAinsPipelineSession(
-                _appId,
-                SelectedCaptureDevice,
-                renderDevice,
-                AinsMode,
-                AppLogger.Instance);
-
-            _isActive = true;
-            _statsTimer.Start();
-            // Immediate check: the default mic may have just been switched
-            CheckDefaultDevice();
-            RaiseStateChanged();
+            // Auto-switch to CABLE Output if enabled
+            if (AutoSwitchMic)
+            {
+                SwitchToCableOutput();
+            }
 
             await Task.Run(() => _session.Start());
 
@@ -442,32 +424,72 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _memoryUsageMB = 0;
         _lastCpuCheck = default;
 
-        // Restore original default microphone
-        if (_originalDefaultMicId != null)
+        // Restore original default microphone if auto-switch was enabled
+        if (AutoSwitchMic && _originalDefaultMicId != null)
         {
-            AudioDeviceUtility.TrySetDefaultCaptureDevice(_originalDefaultMicId);
+            RestoreOriginalMic();
             _originalDefaultMicId = null;
-        }
-
-        // Hide warning when stopped
-        if (ShowDeviceWarning)
-        {
-            ShowDeviceWarning = false;
-            OnPropertyChanged(nameof(ShowDeviceWarning));
         }
 
         StatusMessage = "降噪已停止";
         RaiseStateChanged();
     }
 
-    private int _deviceCheckTick;
+    /// <summary>
+    /// Switch system default capture device to CABLE Output using AudioDeviceCmdlets.
+    /// Called when auto-switch is enabled and denoising starts or is toggled on.
+    /// </summary>
+    private async void SwitchToCableOutput()
+    {
+        try
+        {
+            var renderDevices = await Task.Run(() => _deviceManager.GetRenderDevices());
+            var cableOutput = renderDevices.FirstOrDefault(d =>
+                d.Name.Contains(_config.VirtualMicphoneName, StringComparison.OrdinalIgnoreCase));
+
+            if (cableOutput == null)
+            {
+                AppLogger.Instance.Warn($"未找到虚拟麦克风: {_config.VirtualMicphoneName}");
+                return;
+            }
+
+            // Save original mic if not already saved
+            if (_originalDefaultMicId == null)
+            {
+                _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
+            }
+
+            // Use AudioDeviceSwitcher (AudioDeviceCmdlets) to switch
+            await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(cableOutput.Id));
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Instance.Error(ex, "切换麦克风失败");
+        }
+    }
+
+    /// <summary>
+    /// Restore the original default capture device.
+    /// Called when denoising stops or auto-switch is toggled off while running.
+    /// </summary>
+    private async void RestoreOriginalMic()
+    {
+        if (_originalDefaultMicId == null) return;
+
+        try
+        {
+            await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(_originalDefaultMicId));
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Instance.Error(ex, "恢复麦克风失败");
+        }
+    }
+
 
     private void OnStatsTimerTick(object? sender, EventArgs e)
     {
         OnPropertyChanged(nameof(ResourceText));
-        // Re-check default audio device every ~2 seconds
-        if (++_deviceCheckTick % 4 == 0)
-            CheckDefaultDevice();
     }
 
     private void OnLogEntryAdded(object? sender, LogEntry entry)
@@ -530,8 +552,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(ResourceText));
         OnPropertyChanged(nameof(DebugMode));
         OnPropertyChanged(nameof(ConnectivityText));
-        OnPropertyChanged(nameof(ShowDeviceWarning));
         OnPropertyChanged(nameof(VirtualMicphoneName));
+            OnPropertyChanged(nameof(AutoSwitchMic));
         OnPropertyChanged(nameof(StartButtonTooltip));
         ToggleCommand.RaiseCanExecuteChanged();
     }
