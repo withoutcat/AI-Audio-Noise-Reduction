@@ -87,9 +87,10 @@
                       Grid.Column="1"
                       MinHeight="34"
                       FontSize="14"
-                      ItemsSource="{Binding CaptureDevices}"
+                      ItemsSource="{Binding SelectableCaptureDevices}"
                       SelectedItem="{Binding SelectedCaptureDevice}"
-                      DisplayMemberPath="Name" />
+                      DisplayMemberPath="Name"
+                      DropDownOpened="OnSelectableCaptureDeviceDropDownOpened" />
 
             <!-- 2. 降噪模式 -->
             <StackPanel Grid.Row="1"

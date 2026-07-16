@@ -135,6 +135,14 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnSelectableCaptureDeviceDropDownOpened(object sender, System.EventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            vm.RefreshCaptureDevices();
+        }
+    }
+
     private void OnOpenSoundSettings(object sender, RoutedEventArgs e)
     {
         if (Environment.OSVersion.Version.Build >= 22000)

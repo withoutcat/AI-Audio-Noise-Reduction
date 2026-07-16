@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -57,12 +57,15 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             Interval = TimeSpan.FromMilliseconds(500)
         };
         _statsTimer.Tick += OnStatsTimerTick;
-        RefreshDevices();
+        RefreshCaptureDevices();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ObservableCollection<AudioDeviceInfo> CaptureDevices { get; } = new();
+    public ObservableCollection<AudioDeviceInfo> SystemCaptureDevices { get; } = [];
+
+    public ObservableCollection<AudioDeviceInfo> SelectableCaptureDevices { get; } = [];
+    
     public ObservableCollection<LogEntry> LogEntries { get; } = new();
 
     public AudioDeviceInfo? SelectedCaptureDevice
@@ -234,7 +237,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         var dialog = new Views.AppIdDialog(_appId);
         var owner = System.Windows.Application.Current?.Windows
-            .Cast<System.Windows.Window>()
+            .Cast<Window>()
             .FirstOrDefault(w => w.IsVisible);
         dialog.Owner = owner;
         if (dialog.ShowDialog() == true && dialog.WasVerified)
@@ -263,16 +266,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         AppLogger.Instance.EntryAdded -= OnLogEntryAdded;
     }
 
-    private void RefreshDevices()
+    public void RefreshCaptureDevices()
     {
         try
         {
-            ReplaceItems(CaptureDevices, _deviceManager.GetCaptureDevices());
+            SelectableCaptureDevices.Clear();
+            _deviceManager.GetCaptureDevices()
+                .Where(d => IsNotCableOutputDevice(d.Name))
+                .ToList()
+                .ForEach(d => SelectableCaptureDevices.Add(d));
 
             // Try to restore last selected device by name
             if (!string.IsNullOrEmpty(_config.LastCaptureDeviceName))
             {
-                var saved = CaptureDevices.FirstOrDefault(d =>
+                var saved = SelectableCaptureDevices.FirstOrDefault(d =>
                     d.Name.Equals(_config.LastCaptureDeviceName, StringComparison.OrdinalIgnoreCase));
                 if (saved != null)
                 {
@@ -281,7 +288,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 }
             }
 
-            SelectedCaptureDevice ??= CaptureDevices.FirstOrDefault();
+            SelectedCaptureDevice ??= SelectableCaptureDevices.FirstOrDefault();
 
             // Apply saved AINS mode
             OnPropertyChanged(nameof(AinsMode));
@@ -289,9 +296,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             // Apply saved debug mode
             OnPropertyChanged(nameof(DebugMode));
 
-            // Check if virtual device (CABLE Output) is the system default recording device
-
-            StatusMessage = $"发现 {CaptureDevices.Count} 个麦克风。";
+            StatusMessage = $"发现 {SelectableCaptureDevices.Count} 个麦克风。";
         }
         catch (Exception ex)
         {
@@ -301,6 +306,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             ToggleCommand.RaiseCanExecuteChanged();
         }
+    }
+
+    private static bool IsNotCableOutputDevice(string deviceName)
+    {
+        return !deviceName.Contains("CABLE Output", StringComparison.OrdinalIgnoreCase)
+               && !deviceName.Contains("CABLE Out 16ch", StringComparison.OrdinalIgnoreCase);
     }
 
 
@@ -347,7 +358,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            var cableOutput = CaptureDevices.FirstOrDefault(d =>
+            var cableOutput = SystemCaptureDevices.FirstOrDefault(d =>
                 d.Name.Contains("CABLE Output", StringComparison.OrdinalIgnoreCase));
             if (cableOutput == null)
             {
@@ -556,15 +567,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged(nameof(AutoSwitchMic));
         OnPropertyChanged(nameof(StartButtonTooltip));
         ToggleCommand.RaiseCanExecuteChanged();
-    }
-
-    private void ReplaceItems<T>(ObservableCollection<T> collection, IEnumerable<T> values)
-    {
-        collection.Clear();
-        foreach (var value in values)
-        {
-            collection.Add(value);
-        }
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
