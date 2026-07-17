@@ -71,7 +71,7 @@ public static class AudioDeviceSwitcher
                 return false;
             }
 
-            AppLogger.Instance.Info($"Default capture device switched to: {deviceId}");
+            AppLogger.Instance.Debug($"Default capture device switched to: {deviceId}");
             return true;
         }
         catch (Exception ex)

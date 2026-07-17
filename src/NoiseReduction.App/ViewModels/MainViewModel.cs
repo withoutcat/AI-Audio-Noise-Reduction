@@ -42,6 +42,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _config = AppConfig.Load();
         _appId = _config.AppId ?? "";
         _debugMode = _config.DebugMode;
+        AppLogger.Instance.MinLevel = _debugMode ? LogLevel.Debug : LogLevel.Info;
         _autoSwitchMic = _config.AutoSwitchMic;
         _ainsMode = _config.LastAinsMode;
     
@@ -132,6 +133,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 _config.DebugMode = value;
                 _config.Save();
+            AppLogger.Instance.MinLevel = value ? LogLevel.Debug : LogLevel.Info;
                 OnPropertyChanged(nameof(ConnectivityText));
             }
         }
