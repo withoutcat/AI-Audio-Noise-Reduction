@@ -463,7 +463,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _lastCpuCheck = default;
 
         // Restore original default microphone if auto-switch was enabled
-        if (AutoSwitchMic && _originalDefaultMicId != null)
+            if (AutoSwitchMic && !string.IsNullOrEmpty(_originalDefaultMicId))
         {
             RestoreOriginalMic();
             _originalDefaultMicId = null;
@@ -494,8 +494,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
-            // Save original mic if not already saved
-            if (_originalDefaultMicId == null)
+            if (string.IsNullOrEmpty(_originalDefaultMicId))
             {
                 _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
             }
@@ -515,7 +514,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     /// </summary>
     private async void RestoreOriginalMic()
     {
-        if (_originalDefaultMicId == null) return;
+        if (string.IsNullOrEmpty(_originalDefaultMicId)) return;
 
         try
         {
