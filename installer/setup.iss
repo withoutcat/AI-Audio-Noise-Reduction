@@ -1,4 +1,4 @@
-; AI Noise Reduction - Inno Setup Installer
+﻿; AI Noise Reduction - Inno Setup Installer
 ; Requires Inno Setup 6+ (https://jrsoftware.org/isinfo.php)
 ;
 ; Build:
@@ -131,6 +131,7 @@ Name: "{app}\logs"; Permissions: users-modify
 var
   DownloadPage: TDownloadWizardPage;
   VBCableDetected: Boolean;
+  VBCableDeviceGUID: String;
   VBCableOkPage: TWizardPage;
   VBCableWaitPage: TWizardPage;
   VBCableWaitLabel: TLabel;
@@ -225,31 +226,51 @@ procedure OnDownloadVBCable(Sender: TObject); forward;
 procedure OnRecheckVBCable(Sender: TObject); forward;
 procedure OnSkipVBCable(Sender: TObject); forward;
 
-function IsCableInstalled(): Boolean;
+function IsVBAudioInstalled(): Boolean;
 var
   SubKeys: TArrayOfString;
   I: Integer;
   FriendlyName: String;
 begin
   Result := False;
-  if RegGetSubkeyNames(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture', SubKeys) then
+  VBCableDeviceGUID := '';
+  if RegGetSubkeyNames(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render', SubKeys) then
     for I := 0 to GetArrayLength(SubKeys) - 1 do
       if RegQueryStringValue(HKLM64,
-        'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture\' + SubKeys[I] + '{#CablePropPath}',
-        '{#CablePropGUID}', FriendlyName) and (Pos('CABLE', FriendlyName) > 0) then
+        'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\' + SubKeys[I] + '\Properties',
+        '{#CablePropGUID}', FriendlyName) and (Pos('VB-Audio', FriendlyName) > 0) then
       begin
-        Result := True; Exit;
+        Result := True;
+        VBCableDeviceGUID := SubKeys[I];
+        Exit;
       end;
-  if not Result then
-    if RegGetSubkeyNames(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render', SubKeys) then
-      for I := 0 to GetArrayLength(SubKeys) - 1 do
-        if RegQueryStringValue(HKLM64,
-          'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\' + SubKeys[I] + '{#CablePropPath}',
-          '{#CablePropGUID}', FriendlyName) and (Pos('CABLE', FriendlyName) > 0) then
-        begin
-          Result := True; Exit;
-        end;
 end;
+
+procedure WriteDefaultVirtualMicConfig();
+var
+  ConfigDir: String;
+  ConfigPath: String;
+  Lines: TArrayOfString;
+  DeviceId: String;
+begin
+  DeviceId := '{0.0.1.00000000}.{' + VBCableDeviceGUID + '}';
+  ConfigDir := ExpandConstant('{localappdata}') + '\AINoiseReduction';
+  ConfigPath := ConfigDir + '\config.json';
+
+  if not DirExists(ConfigDir) then
+    CreateDir(ConfigDir);
+
+  SetArrayLength(Lines, 3);
+  Lines[0] := '{';
+  Lines[1] := '  "DefaultVirtualMicphoneID": "' + DeviceId + '"';
+  Lines[2] := '}';
+
+  if SaveStringsToUTF8File(ConfigPath, Lines, False) then
+    Log('Written DefaultVirtualMicphoneID: ' + DeviceId)
+  else
+    Log('Failed to write config.json');
+end;
+
 
 function IsNetDesktopRuntimeInstalled(): Boolean;
 var
@@ -432,10 +453,11 @@ begin
   end;
 
   { ── Step 5: Recheck ── }
-  if IsCableInstalled() then
+  if IsVBAudioInstalled() then
   begin
     SaveStringToFile(LogFile, TS + 'VB-CABLE detected after installation' + #13#10, True);
     VBCableStatusLabel.Caption := 'VB-CABLE detected! Click "Next" to continue.';
+    WriteDefaultVirtualMicConfig();
     VBCableStatusLabel.Font.Color := clGreen;
     VBCableWaitDone := True;
     WizardForm.NextButton.OnClick(nil);
@@ -453,7 +475,7 @@ end;
 
 procedure OnRecheckVBCable(Sender: TObject);
 begin
-  if IsCableInstalled() then
+  if IsVBAudioInstalled() then
   begin
     VBCableStatusLabel.Caption := 'VB-CABLE detected! Click "Next" to continue.';
     VBCableStatusLabel.Font.Color := clGreen;
@@ -488,9 +510,14 @@ begin
   DownloadPage.ShowBaseNameInsteadOfUrl := False;
 
   { ── VB-CABLE detection ── }
-  VBCableDetected := IsCableInstalled();
+  VBCableDetected := IsVBAudioInstalled();
   if VBCableDetected then
-    CreateVBCableOkPage()
+  begin
+    CreateVBCableOkPage();
+    WriteDefaultVirtualMicConfig();
+  end
+  else
+    CreateVBCableWaitPage();
   else
     CreateVBCableWaitPage();
 
@@ -584,5 +611,9 @@ begin
     RegDeleteValue(HKLM,
       'SYSTEM\CurrentControlSet\Control\Session Manager',
       'PendingFileRenameOperations');
+
+  { 写入虚拟麦克风配置到 config.json }
+  if IsVBAudioInstalled() then
+    WriteDefaultVirtualMicConfig();
   end;
 end;

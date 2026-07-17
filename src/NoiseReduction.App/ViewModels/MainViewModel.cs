@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -78,7 +78,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 // Save device name to config
                 if (value != null)
                 {
-                    _config.LastCaptureDeviceName = value.Name;
+                    _config.LastUserMicphoneID = value.Id;
                     _config.Save();
                 }
 
@@ -196,7 +196,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
 
-    public string VirtualMicphoneName => _config.VirtualMicphoneName;
 
     public string StartButtonTooltip
     {
@@ -277,10 +276,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 .ForEach(d => SelectableCaptureDevices.Add(d));
 
             // Try to restore last selected device by name
-            if (!string.IsNullOrEmpty(_config.LastCaptureDeviceName))
+            if (!string.IsNullOrEmpty(_config.LastUserMicphoneID))
             {
                 var saved = SelectableCaptureDevices.FirstOrDefault(d =>
-                    d.Name.Equals(_config.LastCaptureDeviceName, StringComparison.OrdinalIgnoreCase));
+                    d.Name.Equals(_config.LastUserMicphoneID, StringComparison.OrdinalIgnoreCase));
                 if (saved != null)
                 {
                     _selectedCaptureDevice = saved;
@@ -456,11 +455,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             var renderDevices = await Task.Run(() => _deviceManager.GetRenderDevices());
             var cableOutput = renderDevices.FirstOrDefault(d =>
-                d.Name.Contains(_config.VirtualMicphoneName, StringComparison.OrdinalIgnoreCase));
+                !string.IsNullOrEmpty(_config.DefaultVirtualMicphoneID) &&
+                d.Id == _config.DefaultVirtualMicphoneID)
+            ?? renderDevices.FirstOrDefault(d =>
+                d.Name.Contains("CABLE Output", StringComparison.OrdinalIgnoreCase));
 
             if (cableOutput == null)
             {
-                AppLogger.Instance.Warn($"未找到虚拟麦克风: {_config.VirtualMicphoneName}");
+                AppLogger.Instance.Warn("未找到虚拟麦克风(CABLE Output)，请检查 VB-CABLE 是否已安装。");
                 return;
             }
 
@@ -563,7 +565,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(ResourceText));
         OnPropertyChanged(nameof(DebugMode));
         OnPropertyChanged(nameof(ConnectivityText));
-        OnPropertyChanged(nameof(VirtualMicphoneName));
             OnPropertyChanged(nameof(AutoSwitchMic));
         OnPropertyChanged(nameof(StartButtonTooltip));
         ToggleCommand.RaiseCanExecuteChanged();

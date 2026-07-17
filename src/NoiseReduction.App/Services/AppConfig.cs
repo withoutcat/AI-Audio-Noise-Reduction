@@ -20,12 +20,12 @@ public sealed class AppConfig
 
     // ── Owned fields ───────────────────────────────────────────────────
     public string? AppId { get; set; }
-    public string? LastCaptureDeviceName { get; set; }
+    public string? LastUserMicphoneID { get; set; }
     public int LastAinsMode { get; set; }
     public bool DebugMode { get; set; }
     public bool AutoSwitchMic { get; set; }
     /// <summary>Name of the virtual audio device installed by our installer (e.g. "CABLE Output").</summary>
-    public string VirtualMicphoneName { get; set; } = "CABLE Output";
+    public string? DefaultVirtualMicphoneID { get; set; }
 
     // ── Load ───────────────────────────────────────────────────────────
 
@@ -43,11 +43,11 @@ public sealed class AppConfig
                 return new AppConfig
                 {
                     AppId = (string?)obj["AppId"],
-                    LastCaptureDeviceName = (string?)obj["LastCaptureDeviceName"],
+                    LastUserMicphoneID = (string?)obj["LastUserMicphoneID"],
                     LastAinsMode = (int?)obj["LastAinsMode"] ?? 0,
                     DebugMode = (bool?)obj["DebugMode"] ?? false,
                     AutoSwitchMic = (bool?)obj["AutoSwitchMic"] ?? false,
-                    VirtualMicphoneName = (string?)obj["VirtualMicphoneName"] ?? "CABLE Output",
+                    DefaultVirtualMicphoneID = (string?)obj["DefaultVirtualMicphoneID"],
                 };
             }
             return new AppConfig();
@@ -88,11 +88,11 @@ public sealed class AppConfig
 
             // Merge our fields
             root["AppId"] = AppId;
-            root["LastCaptureDeviceName"] = LastCaptureDeviceName;
+            root["LastUserMicphoneID"] = LastUserMicphoneID;
             root["LastAinsMode"] = LastAinsMode;
             root["DebugMode"] = DebugMode;
             root["AutoSwitchMic"] = AutoSwitchMic;
-            root["VirtualMicphoneName"] = VirtualMicphoneName;
+            root["DefaultVirtualMicphoneID"] = DefaultVirtualMicphoneID;
 
             var json = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(ConfigPath, json);
@@ -109,4 +109,5 @@ public sealed class AppConfig
         }
     }
 }
+
 
