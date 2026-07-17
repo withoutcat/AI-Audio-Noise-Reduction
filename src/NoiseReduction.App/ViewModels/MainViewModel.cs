@@ -413,6 +413,18 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 SwitchToCableOutput();
             }
 
+
+            // Create session to route denoised audio through CABLE Input (render device)
+            _session = new AgoraAinsPipelineSession(
+                _appId,
+                SelectedCaptureDevice!,
+                renderDevice,
+                AinsMode,
+                AppLogger.Instance);
+
+            _isActive = true;
+            _statsTimer.Start();
+            RaiseStateChanged();
             await Task.Run(() => _session.Start());
 
             StatusMessage = "AI降噪运行中";
