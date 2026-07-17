@@ -60,7 +60,7 @@ public partial class MainWindow : Window
         var doc = LogRichTextBox.Document;
         var color = entry.Level switch
         {
-            LogLevel.Debug => SWM.Color.FromRgb(0x6A, 0x73, 0x7D),
+            LogLevel.Debug => SWM.Color.FromRgb(0x6A, 0xB8, 0xFF),
             LogLevel.Warn  => SWM.Color.FromRgb(0xF0, 0xC0, 0x40),
             LogLevel.Error => SWM.Color.FromRgb(0xE7, 0x4C, 0x3C),
             _              => SWM.Color.FromRgb(0x20, 0x20, 0x20)
