@@ -19,7 +19,7 @@
 #define AppExeName "NoiseReductionApp.exe"
 
 ; Registry property name for VB-CABLE detection
-#define CablePropGUID "{a45c254e-df1c-4efd-8020-67d146a850e0},2"
+#define CablePropGUID "{b3f8fa53-0004-438e-9003-51a46e139bfc},6"
 #define CablePropPath "\Properties"
 
 ; Source paths (relative to this file, in installer\)
@@ -230,15 +230,27 @@ function IsVBAudioInstalled(): Boolean;
 var
   SubKeys: TArrayOfString;
   I: Integer;
-  FriendlyName: String;
+  Value: String;
 begin
   Result := False;
   VBCableDeviceGUID := '';
+  { Check Capture first (CABLE Output is a capture device) }
+  if RegGetSubkeyNames(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture', SubKeys) then
+    for I := 0 to GetArrayLength(SubKeys) - 1 do
+      if RegQueryStringValue(HKLM64,
+        'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture\' + SubKeys[I] + '\Properties',
+        '{#CablePropGUID}', Value) and (Pos('VB-Audio', Value) > 0) then
+      begin
+        Result := True;
+        VBCableDeviceGUID := SubKeys[I];
+        Exit;
+      end;
+  { Fall back to Render (CABLE Input) }
   if RegGetSubkeyNames(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render', SubKeys) then
     for I := 0 to GetArrayLength(SubKeys) - 1 do
       if RegQueryStringValue(HKLM64,
         'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\' + SubKeys[I] + '\Properties',
-        '{#CablePropGUID}', FriendlyName) and (Pos('VB-Audio', FriendlyName) > 0) then
+        '{#CablePropGUID}', Value) and (Pos('VB-Audio', Value) > 0) then
       begin
         Result := True;
         VBCableDeviceGUID := SubKeys[I];
@@ -615,4 +627,5 @@ begin
     WriteDefaultVirtualMicConfig();
   end;
 end;
+
 
