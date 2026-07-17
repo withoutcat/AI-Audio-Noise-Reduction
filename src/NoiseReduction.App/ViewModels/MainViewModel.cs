@@ -269,6 +269,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         try
         {
+            var allCaptureDevices = _deviceManager.GetCaptureDevices().ToList();
+
+            // Populate full system list (including CABLE Output for internal detection)
+            SystemCaptureDevices.Clear();
+            allCaptureDevices.ForEach(d => SystemCaptureDevices.Add(d));
+
             SelectableCaptureDevices.Clear();
             _deviceManager.GetCaptureDevices()
                 .Where(d => IsNotCableOutputDevice(d.Name))
@@ -358,12 +364,22 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         try
         {
             var cableOutput = SystemCaptureDevices.FirstOrDefault(d =>
+                !string.IsNullOrEmpty(_config.DefaultVirtualMicphoneID) &&
+                d.Id == _config.DefaultVirtualMicphoneID)
+            ?? SystemCaptureDevices.FirstOrDefault(d =>
                 d.Name.Contains("CABLE Output", StringComparison.OrdinalIgnoreCase));
             if (cableOutput == null)
             {
                 StatusMessage = "未检测到 VB-CABLE 虚拟设备。请先安装 VB-CABLE Virtual Audio Device。";
                 AppLogger.Instance.Error("未检测到 VB-CABLE 虚拟设备。请先安装 VB-CABLE Virtual Audio Device。");
                 return;
+            }
+
+            // If found by name but not in config yet, save for future use
+            if (string.IsNullOrEmpty(_config.DefaultVirtualMicphoneID))
+            {
+                _config.DefaultVirtualMicphoneID = cableOutput.Id;
+                _config.Save();
             }
 
             var renderDeviceName = CaptureToRenderDeviceName(cableOutput.Name);
@@ -453,11 +469,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         try
         {
-            var renderDevices = await Task.Run(() => _deviceManager.GetRenderDevices());
-            var cableOutput = renderDevices.FirstOrDefault(d =>
+            var captureDevices = await Task.Run(() => _deviceManager.GetCaptureDevices());
+            var cableOutput = captureDevices.FirstOrDefault(d =>
                 !string.IsNullOrEmpty(_config.DefaultVirtualMicphoneID) &&
                 d.Id == _config.DefaultVirtualMicphoneID)
-            ?? renderDevices.FirstOrDefault(d =>
+            ?? captureDevices.FirstOrDefault(d =>
                 d.Name.Contains("CABLE Output", StringComparison.OrdinalIgnoreCase));
 
             if (cableOutput == null)
