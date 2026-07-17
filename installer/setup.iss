@@ -231,31 +231,31 @@ var
   SubKeys: TArrayOfString;
   I: Integer;
   Value: String;
+  FoundCapture, FoundRender: Boolean;
 begin
   Result := False;
   VBCableDeviceGUID := '';
-  { Check Capture first (CABLE Output is a capture device) }
+  FoundCapture := False;
+  FoundRender := False;
+  { Check Capture devices (CABLE Output) }
   if RegGetSubkeyNames(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture', SubKeys) then
     for I := 0 to GetArrayLength(SubKeys) - 1 do
       if RegQueryStringValue(HKLM64,
         'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture\' + SubKeys[I] + '\Properties',
-        '{#CablePropGUID}', Value) and (Pos('VB-Audio', Value) > 0) then
+        '{#CablePropGUID}', Value) and (Value = 'VB-Audio Virtual Cable') then
       begin
-        Result := True;
-        VBCableDeviceGUID := SubKeys[I];
-        Exit;
+        FoundCapture := True;
+        if VBCableDeviceGUID = '' then
+          VBCableDeviceGUID := SubKeys[I];
       end;
-  { Fall back to Render (CABLE Input) }
+  { Check Render devices (CABLE Input) }
   if RegGetSubkeyNames(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render', SubKeys) then
     for I := 0 to GetArrayLength(SubKeys) - 1 do
       if RegQueryStringValue(HKLM64,
         'SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\' + SubKeys[I] + '\Properties',
-        '{#CablePropGUID}', Value) and (Pos('VB-Audio', Value) > 0) then
-      begin
-        Result := True;
-        VBCableDeviceGUID := SubKeys[I];
-        Exit;
-      end;
+        '{#CablePropGUID}', Value) and (Value = 'VB-Audio Virtual Cable') then
+        FoundRender := True;
+  Result := FoundCapture and FoundRender;
 end;
 
 procedure WriteDefaultVirtualMicConfig();
