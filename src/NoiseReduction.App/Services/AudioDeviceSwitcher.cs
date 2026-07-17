@@ -34,6 +34,11 @@ public static class AudioDeviceSwitcher
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(deviceId))
+            {
+                AppLogger.Instance.Warn($"SetDefaultCaptureDevice called with empty deviceId. Caller: {new System.Diagnostics.StackTrace()}");
+                return false;
+            }
             var modulePath = GetModulePath();
             // Set-AudioDevice -ID sets both default and default-comm for the device type
             var command = $"Import-Module '{modulePath}'; Set-AudioDevice -ID '{deviceId}'";
@@ -76,4 +81,3 @@ public static class AudioDeviceSwitcher
         }
     }
 }
-

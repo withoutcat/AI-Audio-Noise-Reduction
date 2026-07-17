@@ -363,6 +363,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
+
+            // Save original mic ID BEFORE any async operation
+            _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
             var cableOutput = SystemCaptureDevices.FirstOrDefault(d =>
                 !string.IsNullOrEmpty(_config.DefaultVirtualMicphoneID) &&
                 d.Id == _config.DefaultVirtualMicphoneID)
@@ -403,9 +406,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             }
 
             AppLogger.Instance.Debug($"匹配到渲染设备: {renderDevice.Name}");
-
-            // Save original mic ID for later restoration
-            _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
 
             // Auto-switch to CABLE Output if enabled
             if (AutoSwitchMic)
@@ -494,10 +494,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
-            if (string.IsNullOrEmpty(_originalDefaultMicId))
-            {
-                _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
-            }
 
             // Use AudioDeviceSwitcher (AudioDeviceCmdlets) to switch
             await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(cableOutput.Id));
@@ -518,7 +514,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(_originalDefaultMicId));
+            var deviceId = _originalDefaultMicId;
+            await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(deviceId));
         }
         catch (Exception ex)
         {
