@@ -518,8 +518,6 @@ begin
   end
   else
     CreateVBCableWaitPage();
-  else
-    CreateVBCableWaitPage();
 
   { ── Check .NET Desktop Runtime ── }
   NeedDotNetDownload := not IsNetDesktopRuntimeInstalled();
@@ -617,3 +615,4 @@ begin
     WriteDefaultVirtualMicConfig();
   end;
 end;
+
