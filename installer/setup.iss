@@ -15,7 +15,7 @@
 #define DotNetExe "windowsdesktop-runtime-10.0.9-win-x64.exe"
 #define VBCableURL "https://vb-audio.com/Cable/"
 #define VBCableDownloadURL1 "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip"
-#define VBCableDownloadURL2 "https://github.com/withoutcat/AI-Audio-Noise-Reduction/raw/refs/heads/master/res/tools/VBCABLE_Driver_Pack45.zip"
+#define VBCableDownloadURL2 "https://raw.githubusercontent.com/withoutcat/AI-Audio-Noise-Reduction/refs/heads/master/res/tools/VBCABLE_Driver_Pack45.zip"
 #define VBCableZipName "VBCABLE_Driver_Pack45.zip"
 #define AppExeName "NoiseReductionApp.exe"
 
