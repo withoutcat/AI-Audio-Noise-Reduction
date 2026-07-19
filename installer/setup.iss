@@ -53,6 +53,7 @@ UninstallDisplayIcon={app}\{#AppExeName}
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
 AlwaysRestart=no
+CloseApplications=force
 SetupLogging=yes
 SetupIconFile=..\src\NoiseReduction.App\Assets\application.ico
 

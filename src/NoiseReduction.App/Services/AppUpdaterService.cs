@@ -101,7 +101,7 @@ public class AppUpdaterService
             UseShellExecute = true
         });
 
-        System.Windows.Application.Current.Shutdown();
+        // Let Inno Setup handle the shutdown via CloseApplications=force
     }
 }
 
