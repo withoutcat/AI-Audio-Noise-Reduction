@@ -143,7 +143,7 @@ var
   VBCableWaitDone: Boolean;
   NeedDotNetDownload: Boolean;
   DotNetDownloadSuccess: Boolean;
-  { 鈹€鈹€ Download speed tracking 鈹€鈹€ }
+  { ── Download speed tracking ── }
   DLSpeedStartTick: Int64;
   DLSpeedLastTick: Int64;
   DLSpeedLastBytes: Int64;
@@ -151,7 +151,7 @@ var
 function GetTickCount64: Int64;
   external 'GetTickCount64@kernel32.dll stdcall';
 
-{ 鈹€鈹€ OnDownloadProgress: shows real-time speed / size / percentage 鈹€鈹€ }
+{ ── OnDownloadProgress: shows real-time speed / size / percentage ── }
 function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
 var
   NowTick, Elapsed: Int64;
@@ -160,7 +160,7 @@ var
 begin
   NowTick := GetTickCount64;
 
-  { 鈹€鈹€ Download speed (update every ~500ms) 鈹€鈹€ }
+  { ── Download speed (update every ~500ms) ── }
   if DLSpeedStartTick = 0 then
   begin
     DLSpeedStartTick := NowTick;
@@ -178,7 +178,7 @@ begin
     end;
   end;
 
-  { 鈹€鈹€ Build status text 鈹€鈹€ }
+  { ── Build status text ── }
   if Speed >= 1048576.0 then
     SpeedStr := Format('%.1f MB/s', [Speed / 1048576.0])
   else if Speed >= 1024.0 then
@@ -278,7 +278,7 @@ begin
 
   NewLine := '  "DefaultVirtualMicphoneID": "' + DeviceId + '"';
 
-  { 鈹€鈹€ File doesn't exist 鈫?create fresh with just our field 鈹€鈹€ }
+  { File does not exist -> create fresh with just our field }
   if not FileExists(ConfigPath) then
   begin
     SetArrayLength(Lines, 3);
@@ -293,7 +293,7 @@ begin
     Exit;
   end;
 
-  { 鈹€鈹€ File exists 鈫?read, merge, preserving other fields (e.g. AppId) 鈹€鈹€ }
+  { File exists -> read, merge, preserving other fields (e.g. AppId) }
   if not LoadStringsFromFile(ConfigPath, Lines) then
   begin
     Log('Failed to read existing config.json, overwriting');
@@ -327,7 +327,7 @@ begin
 
   if not Found then
   begin
-    { Insert before the closing }
+    { Insert before the closing brace }
     LineCount := GetArrayLength(Lines);
     SetArrayLength(Lines, LineCount + 1);
 
@@ -383,7 +383,7 @@ begin
         end;
       end;
   except
-    { dotnet.exe not found 鈥?runtime not installed }
+    { dotnet.exe not found — runtime not installed }
   end;
 end;
 
@@ -460,7 +460,7 @@ begin
   VBCableWaitDone := False;
 end;
 
-{ 鈹€鈹€ Download & Install VB-CABLE 鈹€鈹€ }
+{ ── Download & Install VB-CABLE ── }
 procedure OnDownloadVBCable(Sender: TObject);
 var
   URLs: TArrayOfString;
@@ -593,11 +593,11 @@ end;
 
 procedure InitializeWizard();
 begin
-  { 鈹€鈹€ Shared download page (used by both VB-CABLE and .NET Runtime) 鈹€鈹€ }
+  { ── Shared download page (used by both VB-CABLE and .NET Runtime) ── }
   DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
   DownloadPage.ShowBaseNameInsteadOfUrl := False;
 
-  { 鈹€鈹€ VB-CABLE detection 鈹€鈹€ }
+  { ── VB-CABLE detection ── }
   VBCableDetected := IsVBAudioInstalled();
   if VBCableDetected then
   begin
@@ -607,7 +607,7 @@ begin
   else
     CreateVBCableWaitPage();
 
-  { 鈹€鈹€ Check .NET Desktop Runtime 鈹€鈹€ }
+  { ── Check .NET Desktop Runtime ── }
   NeedDotNetDownload := not IsNetDesktopRuntimeInstalled();
   DotNetDownloadSuccess := False;
 end;
@@ -624,14 +624,14 @@ end;
 function NextButtonClick(PageId: Integer): Boolean;
 begin
   Result := True;
-  { 鈹€鈹€ Block Next on VB-CABLE wait page until user installs or skips 鈹€鈹€ }
+  { ── Block Next on VB-CABLE wait page until user installs or skips ── }
   if (VBCableWaitPage <> nil) and (PageId = VBCableWaitPage.ID) and not VBCableWaitDone then
   begin
     Result := False;
     Exit;
   end;
 
-  { 鈹€鈹€ Download .NET Desktop Runtime at wpReady with real progress bar 鈹€鈹€ }
+  { ── Download .NET Desktop Runtime at wpReady with real progress bar ── }
   if (PageId = wpReady) and NeedDotNetDownload then
   begin
     DownloadPage.Clear;
@@ -671,7 +671,7 @@ begin
 
   SaveStringToFile(LogFile, TS + '=== Post-install ===' + #13#10, True);
 
-  { 鈹€鈹€ .NET Desktop Runtime silent install 鈹€鈹€ }
+  { ── .NET Desktop Runtime silent install ── }
   if not NeedDotNetDownload then
   begin
     SaveStringToFile(LogFile, TS + '.NET Desktop Runtime 10.0.x already installed, skipping.' + #13#10, True);
@@ -698,12 +698,11 @@ begin
       'SYSTEM\CurrentControlSet\Control\Session Manager',
       'PendingFileRenameOperations');
 
-  { 鍐欏叆铏氭嫙楹﹀厠椋庨厤缃埌 config.json }
+  { 写入虚拟麦克风配置到 config.json }
   if IsVBAudioInstalled() then
     WriteDefaultVirtualMicConfig();
   end;
 end;
-
 
 
 
