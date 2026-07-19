@@ -5,10 +5,11 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Threading;
 using NAudio.CoreAudioApi;
-using NoiseReduction.App.Services;
 using NoiseReduction.Core.Devices;
 using NoiseReduction.Core.Logging;
 using NoiseReduction.Core.Pipeline;
+using NoiseReduction.App.Services;
+
 using NoiseReduction.Infrastructure.Devices;
 using NoiseReduction.Infrastructure.Pipeline;
 
@@ -31,6 +32,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private string? _originalDefaultMicId;
     private double _cpuUsage;
     private long _memoryUsageMB;
+    private readonly AppUpdaterService _updater = null!;
+    private bool _updateAvailable;
+    private string? _updateVersion;
+    private string? _updateDownloadUrl;
     private TimeSpan _lastCpuTime;
     private DateTime _lastCpuCheck;
 
@@ -45,6 +50,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         AppLogger.Instance.MinLevel = _debugMode ? LogLevel.Debug : LogLevel.Info;
         _autoSwitchMic = _config.AutoSwitchMic;
         _ainsMode = _config.LastAinsMode;
+        _updater = new AppUpdaterService(GetCurrentVersion());
     
         ToggleCommand = new RelayCommand(Toggle, CanToggle);
         ClearLogCommand = new RelayCommand(() =>
@@ -53,12 +59,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             LogEntries.Clear();
             LogCleared?.Invoke();
         });
+        DownloadUpdateCommand = new RelayCommand(OnDownloadUpdate);
         _statsTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(500)
         };
         _statsTimer.Tick += OnStatsTimerTick;
         RefreshCaptureDevices();
+        _ = CheckForUpdateAsync();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -122,6 +130,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public string ToggleButtonText => _isActive ? "停止" : "开始";
+    public bool UpdateAvailable
+    {
+        get => _updateAvailable;
+        private set => SetField(ref _updateAvailable, value);
+    }
+
+    public RelayCommand? DownloadUpdateCommand { get; }
+
     public string RunStateText => _isActive ? "运行中" : "已停止";
     public bool IsRunning => _session?.IsRunning == true;
     public bool DebugMode
@@ -610,4 +626,48 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
+    private static string GetCurrentVersion()
+    {
+        return typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+    }
+
+    private async Task CheckForUpdateAsync()
+    {
+        if (_updater == null) return;
+        try
+        {
+            var info = await _updater.CheckForUpdateAsync();
+            if (info != null)
+            {
+                _updateVersion = info.Version;
+                _updateDownloadUrl = info.DownloadUrl;
+                System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                {
+                    UpdateAvailable = true;
+                    AppLogger.Instance.Info($"发现新版本 v{info.Version}");
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Instance.Debug($"检查更新失败: {ex.Message}");
+        }
+    }
+
+    private async void OnDownloadUpdate()
+    {
+        if (_updater == null || string.IsNullOrEmpty(_updateDownloadUrl)) return;
+        try
+        {
+            AppLogger.Instance.Info("正在下载更新...");
+            var path = await _updater.DownloadUpdateAsync(_updateDownloadUrl);
+            AppLogger.Instance.Info($"更新下载完成: {System.IO.Path.GetFileName(path)}");
+            _updater.InstallUpdate(path);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Instance.Error(ex, "下载更新失败");
+        }
+    }
+
 }

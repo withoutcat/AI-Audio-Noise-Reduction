@@ -13,6 +13,9 @@
         BorderThickness="1"
         FontFamily="Microsoft YaHei, Segoe UI, sans-serif"
         MouseLeftButtonDown="OnDragMove">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
@@ -204,6 +207,17 @@
                                Text="{Binding VersionText}"
                                Margin="8,0,0,0"
                                VerticalAlignment="Center" />
+                <Button Content="⬇"
+                        Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}"
+                        ToolTip="下载更新"
+                        Command="{Binding DownloadUpdateCommand}"
+                        Margin="4,0,0,0"
+                        Padding="2,0"
+                        Width="20" Height="20"
+                        FontSize="12"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand" />
                 </StackPanel>
                 <TextBlock Margin="0,2,0,0"
                            Foreground="#5A6472"
