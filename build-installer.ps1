@@ -68,32 +68,10 @@ else {
 }
 
 # -----------------------------------------------------------
-# Step 2: Publish App (self-contained = false, needs .NET runtime)
+# Step 2: Determine version
 # -----------------------------------------------------------
 Write-Host ""
-Write-Host "Step 2/4: Publishing App..." -ForegroundColor Yellow
-Write-Host "       dotnet publish $appProj -c Release -r win-x64 --self-contained false"
-
-Push-Location $rootDir
-try {
-    & $dotnet publish $appProj -c Release -r win-x64 --self-contained false --nologo
-    if ($LASTEXITCODE -ne 0) { throw "App publish failed" }
-
-    # Locate publish output directory
-    $appPublishDir = Join-Path $rootDir "src\NoiseReduction.App\bin\Release\net10.0-windows\win-x64\publish"
-    if (-not (Test-Path $appPublishDir)) {
-        throw "App publish directory not found: $appPublishDir"
-    }
-    $fileCount = (Get-ChildItem $appPublishDir -File).Count
-    Write-Host "[OK] App published, $fileCount files" -ForegroundColor Green
-}
-finally { Pop-Location }
-
-# -----------------------------------------------------------
-# Step 3: Determine version
-# -----------------------------------------------------------
-Write-Host ""
-Write-Host "Step 3/4: Determining version..." -ForegroundColor Yellow
+Write-Host "Step 2/4: Determining version..." -ForegroundColor Yellow
 
 # Try latest Git tag first, fall back to 0.0.0
 # Use try/catch because $ErrorActionPreference=Stop treats native command stderr as terminating
@@ -108,7 +86,29 @@ try {
 }
 
 # -----------------------------------------------------------
-# Step 4: Run Inno Setup
+# Step 3: Publish App
+# -----------------------------------------------------------
+Write-Host ""
+Write-Host "Step 3/4: Publishing App..." -ForegroundColor Yellow
+Write-Host "       dotnet publish $appProj -c Release -r win-x64 --self-contained false -p:Version=$version"
+
+Push-Location $rootDir
+try {
+    & $dotnet publish $appProj -c Release -r win-x64 --self-contained false -p:Version=$version --nologo
+    if ($LASTEXITCODE -ne 0) { throw "App publish failed" }
+
+    # Locate publish output directory
+    $appPublishDir = Join-Path $rootDir "src\NoiseReduction.App\bin\Release\net10.0-windows\win-x64\publish"
+    if (-not (Test-Path $appPublishDir)) {
+        throw "App publish directory not found: $appPublishDir"
+    }
+    $fileCount = (Get-ChildItem $appPublishDir -File).Count
+    Write-Host "[OK] App published, $fileCount files" -ForegroundColor Green
+}
+finally { Pop-Location }
+
+# -----------------------------------------------------------
+# Step 4: Compile Inno Setup installer
 # -----------------------------------------------------------
 Write-Host ""
 Write-Host "Step 4/4: Compiling Inno Setup installer..." -ForegroundColor Yellow

@@ -1,4 +1,4 @@
-# release.yml
+﻿# release.yml
 # Build and release the AI Noise Reduction installer.
 # Runs on windows-latest (needed for WPF app + Inno Setup).
 #
