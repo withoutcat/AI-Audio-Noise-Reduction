@@ -14,7 +14,8 @@
 #define DotNetURL "https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.9/windowsdesktop-runtime-10.0.9-win-x64.exe"
 #define DotNetExe "windowsdesktop-runtime-10.0.9-win-x64.exe"
 #define VBCableURL "https://vb-audio.com/Cable/"
-#define VBCableDownloadURL "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip"
+#define VBCableDownloadURL1 "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip"
+#define VBCableDownloadURL2 "https://github.com/withoutcat/AI-Audio-Noise-Reduction/raw/refs/heads/master/res/tools/VBCABLE_Driver_Pack45.zip"
 #define VBCableZipName "VBCABLE_Driver_Pack45.zip"
 #define AppExeName "NoiseReductionApp.exe"
 
@@ -383,8 +384,11 @@ end;
 { ── Download & Install VB-CABLE ── }
 procedure OnDownloadVBCable(Sender: TObject);
 var
+  URLs: TArrayOfString;
+  I: Integer;
   ZipPath, ExtractDir, InstallerPath, LogFile, PSCommand, TS: String;
   ResultCode: Integer;
+  Downloaded: Boolean;
 begin
   ZipPath := ExpandConstant('{tmp}\{#VBCableZipName}');
   ExtractDir := ExpandConstant('{tmp}\vbcable');
@@ -393,32 +397,48 @@ begin
 
   SaveStringToFile(LogFile, TS + '=== VB-CABLE auto-install ===' + #13#10, False);
 
-  { ── Step 1: Download with real progress bar ── }
-  DownloadPage.Clear;
-  DownloadPage.Add('{#VBCableDownloadURL}', '{#VBCableZipName}', '');
-  DownloadPage.Show;
-  try
+  { Step 1: Download with fallback URLs }
+  SetArrayLength(URLs, 2);
+  URLs[0] := '{#VBCableDownloadURL1}';
+  URLs[1] := '{#VBCableDownloadURL2}';
+
+  Downloaded := False;
+  for I := 0 to GetArrayLength(URLs) - 1 do
+  begin
+    DeleteFile(ZipPath);
+    DownloadPage.Clear;
+    DownloadPage.Add(URLs[I], '{#VBCableZipName}', '');
+    DownloadPage.Show;
     try
-      SaveStringToFile(LogFile, TS + 'Downloading: {#VBCableDownloadURL}' + #13#10, True);
-      DownloadPage.Download;
-      SaveStringToFile(LogFile, TS + 'Download complete: ' + ZipPath + #13#10, True);
-    except
-      if DownloadPage.AbortedByUser then
-        SaveStringToFile(LogFile, TS + 'Download aborted by user' + #13#10, True)
-      else begin
-        SaveStringToFile(LogFile, TS + 'Download FAILED: ' + GetExceptionMessage + #13#10, True);
-        MsgBox('Download failed. Please check your internet connection and try again, ' +
-          'or visit {#VBCableURL} to download manually.', mbError, MB_OK);
+      try
+        SaveStringToFile(LogFile, TS + 'Downloading: ' + URLs[I] + #13#10, True);
+        DownloadPage.Download;
+        SaveStringToFile(LogFile, TS + 'Download complete: ' + ZipPath + #13#10, True);
+        Downloaded := True;
+        Break;
+      except
+        if DownloadPage.AbortedByUser then
+        begin
+          SaveStringToFile(LogFile, TS + 'Download aborted by user' + #13#10, True);
+          Exit;
+        end;
+        SaveStringToFile(LogFile, TS + 'Download FAILED from URL ' + IntToStr(I + 1) + ': ' + GetExceptionMessage + #13#10, True);
       end;
-      Exit;
+    finally
+      DownloadPage.Hide;
     end;
-  finally
-    DownloadPage.Hide;
+  end;
+
+  if not Downloaded then
+  begin
+    MsgBox('Download failed from all sources. Please check your internet connection and try again, ' +
+      'or visit {#VBCableURL} to download manually.', mbError, MB_OK);
+    Exit;
   end;
 
   if not FileExists(ZipPath) then Exit;
 
-  { ── Step 2: Extract ── }
+  { Step 2: Extract }
   if DirExists(ExtractDir) then
     DelTree(ExtractDir, True, True, True);
 
@@ -436,52 +456,29 @@ begin
   end;
   SaveStringToFile(LogFile, TS + 'Extract complete: ' + ExtractDir + #13#10, True);
 
-  { ── Step 3: Run VB-CABLE installer ── }
+  { Step 3: Run VB-CABLE installer }
   InstallerPath := ExtractDir + '\VBCABLE_Setup_x64.exe';
   if not FileExists(InstallerPath) then
-  begin
     InstallerPath := ExtractDir + '\VBCABLE_Setup.exe';
-    if not FileExists(InstallerPath) then
-    begin
-      SaveStringToFile(LogFile, TS + 'Setup EXE not found in extracted package' + #13#10, True);
-      MsgBox('VB-CABLE setup program not found in the downloaded package. ' +
-        'Please visit {#VBCableURL} to install manually.', mbError, MB_OK);
-      Exit;
-    end;
+
+  SaveStringToFile(LogFile, TS + 'Installing: ' + InstallerPath + #13#10, True);
+
+  if not Exec(InstallerPath, '/SILENT', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+  begin
+    SaveStringToFile(LogFile, TS + 'Installation FAILED (code ' + IntToStr(ResultCode) + ')' + #13#10, True);
+    MsgBox('VB-CABLE installation failed. Please try again or install manually from {#VBCableURL}.',
+      mbError, MB_OK);
+    Exit;
   end;
 
-  SaveStringToFile(LogFile, TS + 'Running: ' + InstallerPath + #13#10, True);
+  SaveStringToFile(LogFile, TS + 'Installation SUCCESS' + #13#10, True);
 
-  if Exec(InstallerPath, '', ExtractDir, SW_SHOWNORMAL, ewWaitUntilTerminated, ResultCode) then
-    SaveStringToFile(LogFile, TS + 'Installer finished, code: ' + IntToStr(ResultCode) + #13#10, True)
-  else
-    SaveStringToFile(LogFile, TS + 'Failed to launch installer' + #13#10, True);
-
-  { ── Step 4: Clean up temp files ── }
-  try
-    DeleteFile(ZipPath);
-    DelTree(ExtractDir, True, True, True);
-  except
-  end;
-
-  { ── Step 5: Recheck ── }
+  { Step 4: Re-check and advance }
   if IsVBAudioInstalled() then
   begin
-    SaveStringToFile(LogFile, TS + 'VB-CABLE detected after installation' + #13#10, True);
-    VBCableStatusLabel.Caption := 'VB-CABLE detected! Click "Next" to continue.';
     WriteDefaultVirtualMicConfig();
-    VBCableStatusLabel.Font.Color := clGreen;
     VBCableWaitDone := True;
     WizardForm.NextButton.OnClick(nil);
-  end
-  else
-  begin
-    SaveStringToFile(LogFile, TS + 'VB-CABLE still not detected after installation' + #13#10, True);
-    VBCableStatusLabel.Caption :=
-      'Installation completed, but VB-CABLE was not detected.' + #13#10 +
-      'You may need to reboot your computer before the driver takes effect.' + #13#10 +
-      'After reboot, re-run this installer or install VB-CABLE manually.';
-    VBCableStatusLabel.Font.Color := clRed;
   end;
 end;
 
@@ -627,5 +624,6 @@ begin
     WriteDefaultVirtualMicConfig();
   end;
 end;
+
 
 
