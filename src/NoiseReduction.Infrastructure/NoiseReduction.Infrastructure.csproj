@@ -14,4 +14,3 @@
     <ProjectReference Include="..\NoiseReduction.Core\NoiseReduction.Core.csproj" />
   </ItemGroup>
 </Project>
-

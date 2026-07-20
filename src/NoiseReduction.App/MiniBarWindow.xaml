@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="AI Noise Reduction"
-        Width="256" Height="40"
+        Width="256"
+    Height="40"
         WindowStyle="None"
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"
@@ -12,55 +13,87 @@
         BorderThickness="1"
         FontFamily="Microsoft YaHei, Segoe UI, sans-serif"
         MouseLeftButtonDown="OnDragMove">
-    <shell:WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
-    </shell:WindowChrome.WindowChrome>
-    <Grid Margin="6,2">
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <!-- Logo -->
-            <Image Source="Assets/logo.png" Width="22" Height="22"
-                   RenderOptions.BitmapScalingMode="HighQuality"
-                   VerticalAlignment="Center" />
+  <shell:WindowChrome.WindowChrome>
+    <shell:WindowChrome CaptionHeight="0"
+        ResizeBorderThickness="0"
+        UseAeroCaptionButtons="False"/>
+  </shell:WindowChrome.WindowChrome>
+  <Grid Margin="6,2">
+    <StackPanel Orientation="Horizontal"
+        VerticalAlignment="Center">
+      <!-- Logo -->
+      <Image Source="Assets/logo.png"
+          Width="22"
+          Height="22"
+             RenderOptions.BitmapScalingMode="HighQuality"
+             VerticalAlignment="Center"/>
 
-            <!-- Mode selector -->
-            <ComboBox MinHeight="24" FontSize="12" Width="88" Margin="6,0,0,0"
-                      VerticalAlignment="Center"
-                      SelectedValue="{Binding AinsMode}"
-                      SelectedValuePath="Tag">
-                <ComboBoxItem Content="均衡" Tag="0" />
-                <ComboBoxItem Content="强力" Tag="1" />
-                <ComboBoxItem Content="低延迟" Tag="2" />
-            </ComboBox>
+      <!-- Mode selector -->
+      <ComboBox MinHeight="24"
+          FontSize="12"
+          Width="88"
+          Margin="6,0,0,0"
+                VerticalAlignment="Center"
+                SelectedValue="{Binding AinsMode}"
+                SelectedValuePath="Tag">
+        <ComboBoxItem Content="均衡"
+            Tag="0"/>
+        <ComboBoxItem Content="强力"
+            Tag="1"/>
+        <ComboBoxItem Content="低延迟"
+            Tag="2"/>
+      </ComboBox>
 
-            <!-- Start/Stop button -->
-            <Button Style="{StaticResource StartStopButtonStyle}"
-                    MinWidth="44" MinHeight="24" FontSize="11"
-                    Padding="4,0" Margin="6,0,0,0"
-                    VerticalAlignment="Center"
-                    ToolTip="{Binding StartButtonTooltip}"
-                    Command="{Binding ToggleCommand}"
-                    Content="{Binding ToggleButtonText}" />
+      <!-- Start/Stop button -->
+      <Button Style="{StaticResource StartStopButtonStyle}"
+              MinWidth="44"
+          MinHeight="24"
+          FontSize="11"
+              Padding="4,0"
+          Margin="6,0,0,0"
+              VerticalAlignment="Center"
+              ToolTip="{Binding StartButtonTooltip}"
+              Command="{Binding ToggleCommand}"
+              Content="{Binding ToggleButtonText}"/>
 
-            <!-- Top most -->
-            <Button Content="{Binding TopMostIcon}" Width="20" Height="20" Padding="0"
-                    Click="OnTopMostClick" ToolTip="{Binding TopMostTooltip}"
-                    Background="Transparent" BorderThickness="0"
-                    FontSize="12" Cursor="Hand"
-                    VerticalAlignment="Center" />
+      <!-- Top most -->
+      <Button Content="{Binding TopMostIcon}"
+          Width="20"
+          Height="20"
+          Padding="0"
+              Click="OnTopMostClick"
+          ToolTip="{Binding TopMostTooltip}"
+              Background="Transparent"
+          BorderThickness="0"
+              FontSize="12"
+          Cursor="Hand"
+              VerticalAlignment="Center"/>
 
-            <!-- Expand to main window -->
-            <Button Content="⛶" Width="20" Height="20" Padding="0"
-                    Click="OnExpandClick" ToolTip="展开主窗口"
-                    Background="Transparent" BorderThickness="0"
-                    FontSize="16" Cursor="Hand"
-                    VerticalAlignment="Center" />
+      <!-- Expand to main window -->
+      <Button Content="⛶"
+          Width="20"
+          Height="20"
+          Padding="0"
+              Click="OnExpandClick"
+          ToolTip="展开主窗口"
+              Background="Transparent"
+          BorderThickness="0"
+              FontSize="16"
+          Cursor="Hand"
+              VerticalAlignment="Center"/>
 
-            <!-- Minimize to tray -->
-            <Button Content="➖" Width="20" Height="20" Padding="0"
-                    Click="OnMinimizeToTrayClick" ToolTip="最小化到托盘"
-                    Background="Transparent" BorderThickness="0"
-                    FontSize="10" Cursor="Hand"
-                    VerticalAlignment="Center" />
-        </StackPanel>
-    </Grid>
+      <!-- Minimize to tray -->
+      <Button Content="➖"
+          Width="20"
+          Height="20"
+          Padding="0"
+              Click="OnMinimizeToTrayClick"
+          ToolTip="最小化到托盘"
+              Background="Transparent"
+          BorderThickness="0"
+              FontSize="10"
+          Cursor="Hand"
+              VerticalAlignment="Center"/>
+    </StackPanel>
+  </Grid>
 </Window>

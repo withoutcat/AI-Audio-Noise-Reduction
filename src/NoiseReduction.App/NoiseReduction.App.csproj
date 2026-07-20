@@ -21,20 +21,24 @@
 
   <ItemGroup>
     <!-- Copy icon alongside the EXE so setup shortcuts can reference it directly -->
-    <Content Include="Assets\application.ico" Link="application.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\application.ico" Link="application.ico"
+      CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\NoiseReduction.Core\NoiseReduction.Core.csproj" />
-    <ProjectReference Include="..\NoiseReduction.Infrastructure\NoiseReduction.Infrastructure.csproj" />
+    <ProjectReference
+      Include="..\NoiseReduction.Infrastructure\NoiseReduction.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Bridge DLL (copied to native\ subdirectory) -->
-    <None Include="$(BridgeDir)Bridge.dll" Link="native\Bridge.dll" CopyToOutputDirectory="PreserveNewest" />
-    <!-- Audio-only SDK DLLs: exclude video/face/spatial/lip-sync/beauty/echo-cancel extensions to reduce app size -->
+    <None Include="$(BridgeDir)Bridge.dll" Link="native\Bridge.dll"
+      CopyToOutputDirectory="PreserveNewest" />
+    <!-- Audio-only SDK DLLs: exclude video/face/spatial/lip-sync/beauty/echo-cancel extensions to
+    reduce app size -->
     <None Include="$(SdkDir)x86_64\*.dll"
-          Exclude="$(SdkDir)x86_64\video_enc.dll;
+      Exclude="$(SdkDir)x86_64\video_enc.dll;
                    $(SdkDir)x86_64\glfw3.dll;
                    $(SdkDir)x86_64\libagora-wgc.dll;
                    $(SdkDir)x86_64\libagora_ai_echo_cancellation_extension.dll;
@@ -50,26 +54,32 @@
                    $(SdkDir)x86_64\libagora_video_av1_encoder_extension.dll;
                    $(SdkDir)x86_64\libagora_video_encoder_extension.dll;
                    $(SdkDir)x86_64\libagora_video_quality_analyzer_extension.dll"
-          Link="native\%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest" />
+      Link="native\%(Filename)%(Extension)"
+      CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
-  
+
   <!-- Clean up legacy root-level native DLLs that may linger from previous build config -->
   <Target Name="CleanLegacyRootNativeDlls" BeforeTargets="BeforeBuild">
     <Delete Files="$(OutputPath)Bridge.dll" Condition="Exists('$(OutputPath)Bridge.dll')" />
-    <Delete Files="$(OutputPath)agora_rtc_sdk.dll" Condition="Exists('$(OutputPath)agora_rtc_sdk.dll')" />
-    <Delete Files="$(OutputPath)libagora_ai_noise_suppression_extension.dll" Condition="Exists('$(OutputPath)libagora_ai_noise_suppression_extension.dll')" />
+    <Delete Files="$(OutputPath)agora_rtc_sdk.dll"
+      Condition="Exists('$(OutputPath)agora_rtc_sdk.dll')" />
+    <Delete Files="$(OutputPath)libagora_ai_noise_suppression_extension.dll"
+      Condition="Exists('$(OutputPath)libagora_ai_noise_suppression_extension.dll')" />
     <Delete Files="$(OutputPath)libaosl.dll" Condition="Exists('$(OutputPath)libaosl.dll')" />
-    <Delete Files="$(OutputPath)libagora-fdkaac.dll" Condition="Exists('$(OutputPath)libagora-fdkaac.dll')" />
-    <Delete Files="$(OutputPath)libagora-ffmpeg.dll" Condition="Exists('$(OutputPath)libagora-ffmpeg.dll')" />
-    <Delete Files="$(OutputPath)libagora-soundtouch.dll" Condition="Exists('$(OutputPath)libagora-soundtouch.dll')" />
-    <Delete Files="$(OutputPath)libagora-wgc.dll" Condition="Exists('$(OutputPath)libagora-wgc.dll')" />
+    <Delete Files="$(OutputPath)libagora-fdkaac.dll"
+      Condition="Exists('$(OutputPath)libagora-fdkaac.dll')" />
+    <Delete Files="$(OutputPath)libagora-ffmpeg.dll"
+      Condition="Exists('$(OutputPath)libagora-ffmpeg.dll')" />
+    <Delete Files="$(OutputPath)libagora-soundtouch.dll"
+      Condition="Exists('$(OutputPath)libagora-soundtouch.dll')" />
+    <Delete Files="$(OutputPath)libagora-wgc.dll"
+      Condition="Exists('$(OutputPath)libagora-wgc.dll')" />
     <Delete Files="$(OutputPath)glfw3.dll" Condition="Exists('$(OutputPath)glfw3.dll')" />
   </Target>
 
   <!-- AudioDeviceCmdlets for system microphone switching -->
   <ItemGroup>
-    <None Include="$(AdcDir)*.dll" Link="native\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(AdcDir)*.dll" Link="native\%(Filename)%(Extension)"
+      CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
-

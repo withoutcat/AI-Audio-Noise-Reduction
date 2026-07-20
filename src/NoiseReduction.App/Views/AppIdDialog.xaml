@@ -10,94 +10,94 @@
         WindowStartupLocation="CenterOwner"
         Background="#F6F7F9"
         ShowInTaskbar="False">
-    <Grid Margin="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+  <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
 
-        <!-- Title (only label) -->
-        <TextBlock Text="声网 AppID"
-                   FontSize="16"
+    <!-- Title (only label) -->
+    <TextBlock Text="声网 AppID"
+               FontSize="16"
+               FontWeight="SemiBold"
+               Margin="0,0,0,12"/>
+
+    <!-- AppID Input -->
+    <TextBox Grid.Row="1"
+             x:Name="AppIdTextBox"
+             MinHeight="30"
+             Padding="8,4"
+             FontFamily="Consolas, Courier New, monospace"
+             FontSize="13"
+             TextWrapping="NoWrap"
+             VerticalContentAlignment="Center"/>
+
+    <!-- Result Area (scrollable for long error messages) -->
+    <Border Grid.Row="2"
+            x:Name="ResultBorder"
+            Visibility="Collapsed"
+            Margin="0,10,0,0"
+            Padding="8"
+            BorderThickness="1"
+            CornerRadius="3"
+            BorderBrush="#D9DEE7">
+      <StackPanel>
+        <TextBlock x:Name="ResultTitle"
+                   FontSize="12"
                    FontWeight="SemiBold"
-                   Margin="0,0,0,12" />
+                   Margin="0,0,0,4"/>
+        <TextBlock x:Name="SdkVersionText"
+                   FontSize="11"
+                   Foreground="#5A6472"/>
+        <ScrollViewer MaxHeight="160"
+                      VerticalScrollBarVisibility="Auto">
+          <TextBox x:Name="DetailText"
+                   FontSize="11"
+                   Foreground="#5A6472"
+                   TextWrapping="Wrap"
+                   IsReadOnly="True"
+                   BorderThickness="0"
+                   Background="Transparent"
+                   IsTabStop="False"/>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
 
-        <!-- AppID Input -->
-        <TextBox Grid.Row="1"
-                 x:Name="AppIdTextBox"
-                 MinHeight="30"
-                 Padding="8,4"
-                 FontFamily="Consolas, Courier New, monospace"
-                 FontSize="13"
-                 TextWrapping="NoWrap"
-                 VerticalContentAlignment="Center" />
-
-        <!-- Result Area (scrollable for long error messages) -->
-        <Border Grid.Row="2"
-                x:Name="ResultBorder"
-                Visibility="Collapsed"
-                Margin="0,10,0,0"
-                Padding="8"
-                BorderThickness="1"
-                CornerRadius="3"
-                BorderBrush="#D9DEE7">
-            <StackPanel>
-                <TextBlock x:Name="ResultTitle"
-                           FontSize="12"
-                           FontWeight="SemiBold"
-                           Margin="0,0,0,4" />
-                <TextBlock x:Name="SdkVersionText"
-                           FontSize="11"
-                           Foreground="#5A6472" />
-                <ScrollViewer MaxHeight="160"
-                              VerticalScrollBarVisibility="Auto">
-                    <TextBox x:Name="DetailText"
-                             FontSize="11"
-                             Foreground="#5A6472"
-                             TextWrapping="Wrap"
-                             IsReadOnly="True"
-                             BorderThickness="0"
-                             Background="Transparent"
-                             IsTabStop="False" />
-                </ScrollViewer>
-            </StackPanel>
-        </Border>
-
-        <!-- Bottom row -->
-        <DockPanel Grid.Row="4"
-                   LastChildFill="False"
-                   Margin="0,6,0,0">
-            <Button Content="解除 AppID"
-                    MinWidth="72"
-                    MinHeight="28"
-                    FontSize="11"
-                    Foreground="#E74C3C"
-                    Background="Transparent"
-                    BorderBrush="#E74C3C"
-                    Click="OnUnlinkClick" />
-            <StackPanel DockPanel.Dock="Right"
-                        Orientation="Horizontal">
-                <TextBlock x:Name="LoadingText"
-                           Visibility="Collapsed"
-                           VerticalAlignment="Center"
-                           FontSize="11"
-                           Foreground="#888888"
-                           Text="正在验证..." />
-                <Button x:Name="VerifyButton"
-                        Content="验证"
-                        MinWidth="70"
-                        MinHeight="28"
-                        Padding="10,0"
-                        Margin="6,0,0,0"
-                        Background="#1F7A8C"
-                        Foreground="White"
-                        FontSize="12"
-                        ToolTip="验证并关闭该窗口"
-                        Click="OnVerifyClick" />
-            </StackPanel>
-        </DockPanel>
-    </Grid>
+    <!-- Bottom row -->
+    <DockPanel Grid.Row="4"
+               LastChildFill="False"
+               Margin="0,6,0,0">
+      <Button Content="解除 AppID"
+              MinWidth="72"
+              MinHeight="28"
+              FontSize="11"
+              Foreground="#E74C3C"
+              Background="Transparent"
+              BorderBrush="#E74C3C"
+              Click="OnUnlinkClick"/>
+      <StackPanel DockPanel.Dock="Right"
+                  Orientation="Horizontal">
+        <TextBlock x:Name="LoadingText"
+                   Visibility="Collapsed"
+                   VerticalAlignment="Center"
+                   FontSize="11"
+                   Foreground="#888888"
+                   Text="正在验证..."/>
+        <Button x:Name="VerifyButton"
+                Content="验证"
+                MinWidth="70"
+                MinHeight="28"
+                Padding="10,0"
+                Margin="6,0,0,0"
+                Background="#1F7A8C"
+                Foreground="White"
+                FontSize="12"
+                ToolTip="验证并关闭该窗口"
+                Click="OnVerifyClick"/>
+      </StackPanel>
+    </DockPanel>
+  </Grid>
 </Window>

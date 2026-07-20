@@ -14,16 +14,16 @@ namespace NoiseReduction.App.Services;
 /// </summary>
 public static class UiHelper
 {
-    /// <summary>
-    /// Attach a tooltip to any FrameworkElement, optionally enabling
-    /// tooltip display even when the element is disabled.
-    /// </summary>
-    public static void SetToolTip(FrameworkElement element, string text, bool showOnDisabled = false)
+  /// <summary>
+  /// Attach a tooltip to any FrameworkElement, optionally enabling
+  /// tooltip display even when the element is disabled.
+  /// </summary>
+  public static void SetToolTip(FrameworkElement element, string text, bool showOnDisabled = false)
+  {
+    ToolTipService.SetToolTip(element, text);
+    if (showOnDisabled)
     {
-        ToolTipService.SetToolTip(element, text);
-        if (showOnDisabled)
-        {
-            ToolTipService.SetShowOnDisabled(element, true);
-        }
+      ToolTipService.SetShowOnDisabled(element, true);
     }
+  }
 }
