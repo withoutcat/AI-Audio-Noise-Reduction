@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Threading;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -25,11 +25,13 @@ public partial class App : System.Windows.Application
     private MiniBarWindow? _miniBarWindow;
     private WF.NotifyIcon? _notifyIcon;
     private bool _isExiting;
+    private bool _installerLaunched;
 
     /// <summary>Shared ViewModel, created once at startup.</summary>
     public MainViewModel ViewModel { get; private set; } = null!;
 
     public bool IsExiting => _isExiting;
+    public bool InstallerLaunched { get => _installerLaunched; set => _installerLaunched = value; }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -86,6 +88,9 @@ public partial class App : System.Windows.Application
         MainWindow = _mainWindow;
 
         CreateNotifyIcon();
+
+        _mainWindow.Closing += OnWindowClosing;
+        _miniBarWindow.Closing += OnWindowClosing;
 
         base.OnStartup(e);
         _mainWindow.Show();
@@ -168,6 +173,28 @@ public partial class App : System.Windows.Application
     }
 
     // ── Tray icon ────────────────────────────────────────────────────
+
+    private void OnWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (_isExiting) return;
+
+        if (_installerLaunched)
+        {
+            // Installer is waiting - graceful shutdown
+            _isExiting = true;
+
+            // Stop noise reduction if running, before cleanup
+            ViewModel.ForceStop();
+
+            // Clean up tray icon and exit
+            ExitApplication();
+            return;
+        }
+
+        // User closed the window -> minimize to tray
+        e.Cancel = true;
+        MinimizeToTray();
+    }
 
     private void CreateNotifyIcon()
     {

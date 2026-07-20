@@ -91,9 +91,14 @@ public class AppUpdaterService
         return filePath;
     }
 
-    public void InstallUpdate(string installerPath)
+        public void InstallUpdate(string installerPath)
     {
         AppLogger.Instance.Debug($"启动安装更新, 路径={installerPath}");
+
+        // Signal that installer is waiting -> OnWindowClosing does graceful shutdown
+        if (System.Windows.Application.Current is App app)
+            app.InstallerLaunched = true;
+
         Process.Start(new ProcessStartInfo
         {
             FileName = installerPath,
@@ -101,7 +106,7 @@ public class AppUpdaterService
             UseShellExecute = true
         });
 
-        // Let Inno Setup handle the shutdown via CloseApplications=force
+        AppLogger.Instance.Info("安装程序已启动，由安装程序接管关闭流程");
     }
 }
 

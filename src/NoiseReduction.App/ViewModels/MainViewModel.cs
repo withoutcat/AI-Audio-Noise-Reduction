@@ -470,6 +470,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    internal void ForceStop()
+    {
+        if (_isActive) Stop();
+    }
+
     private void Stop()
     {
         _session?.Dispose();
