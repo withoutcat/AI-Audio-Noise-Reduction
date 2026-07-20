@@ -60,6 +60,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             LogCleared?.Invoke();
         });
         DownloadUpdateCommand = new RelayCommand(OnDownloadUpdate);
+        CheckForUpdatesCommand = new RelayCommand(OnCheckForUpdates);
         _statsTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(500)
@@ -137,6 +138,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public RelayCommand? DownloadUpdateCommand { get; }
+    public RelayCommand? CheckForUpdatesCommand { get; }
 
     public string RunStateText => _isActive ? "运行中" : "已停止";
     public bool IsRunning => _session?.IsRunning == true;
@@ -676,4 +678,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    private void OnCheckForUpdates()
+    {
+        _ = CheckForUpdateAsync();
+    }
 }
