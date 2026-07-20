@@ -102,7 +102,7 @@ public class AppUpdaterService
         Process.Start(new ProcessStartInfo
         {
             FileName = installerPath,
-            Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART",
+            Arguments = "/SUPPRESSMSGBOXES /NORESTART",
             UseShellExecute = true
         });
 
