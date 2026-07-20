@@ -24,14 +24,12 @@ public partial class App : System.Windows.Application
     private MainWindow? _mainWindow;
     private MiniBarWindow? _miniBarWindow;
     private WF.NotifyIcon? _notifyIcon;
-    private bool _isExiting;
-    private bool _installerLaunched;
 
     /// <summary>Shared ViewModel, created once at startup.</summary>
     public MainViewModel ViewModel { get; private set; } = null!;
 
-    public bool IsExiting => _isExiting;
-    public bool InstallerLaunched { get => _installerLaunched; set => _installerLaunched = value; }
+    public bool IsExiting { get; private set; }
+    public bool InstallerLaunched { get; set; }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -61,7 +59,7 @@ public partial class App : System.Windows.Application
         };
 
         // Allow system shutdown / logoff to close windows normally
-        SessionEnding += (_, _) => _isExiting = true;
+        SessionEnding += (_, _) => IsExiting = true;
 
         // Add native\ to the process DLL search path so NativeLibrary.Load / LoadLibraryEx
         // can find native DLLs (agora_rtc_sdk.dll, etc.) and resolve their transitive dependencies
@@ -160,7 +158,7 @@ public partial class App : System.Windows.Application
 
     public void ExitApplication()
     {
-        _isExiting = true;
+        IsExiting = true;
         Shutdown();
     }
 
@@ -168,12 +166,12 @@ public partial class App : System.Windows.Application
 
     private void OnWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        if (_isExiting) return;
+        if (IsExiting) return;
 
-        if (_installerLaunched)
+        if (InstallerLaunched)
         {
             // Installer is waiting - graceful shutdown
-            _isExiting = true;
+            IsExiting = true;
 
             // Stop noise reduction if running, before cleanup
             ViewModel.ForceStop();
