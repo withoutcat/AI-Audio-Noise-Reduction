@@ -10,6 +10,15 @@
 # CI: GitHub Actions (.github/workflows/release.yml) builds on windows-latest
 #     via: choco install innosetup -y; ISCC installer\setup.iss
 
+
+param(
+    [string]$AppVersion,                # Override version (default: from git tag)
+    [ValidateSet('Debug','Release')]
+    [string]$Configuration = 'Release',  # Build configuration
+    [switch]$SkipBridge,                 # Skip Bridge DLL build
+    [switch]$SkipPublish                 # Skip dotnet publish step
+)
+
 $ErrorActionPreference = "Stop"
 $rootDir = $PSScriptRoot
 $bridgeDir = Join-Path $rootDir "src\NoiseReduction.Bridge"
@@ -48,67 +57,77 @@ if (-not $dotnet) {
 Write-Host "[OK] .NET SDK: $($dotnet.Source)" -ForegroundColor Green
 
 # -----------------------------------------------------------
-# Step 1: Build Bridge C++ DLL
+# 
+Step 1: Build Bridge C++ DLL
 # -----------------------------------------------------------
 Write-Host ""
 Write-Host "Step 1/4: Building Bridge C++ DLL..." -ForegroundColor Yellow
 
-$buildBat = Join-Path $bridgeDir "build.bat"
-if (Test-Path $buildBat) {
-    Push-Location $bridgeDir
-    try {
-        & cmd.exe /c $buildBat
-        if ($LASTEXITCODE -ne 0) { throw "Bridge build.bat returned error code $LASTEXITCODE" }
-        Write-Host "[OK] Bridge DLL built" -ForegroundColor Green
+if (-not $SkipBridge) {
+    $buildBat = Join-Path $bridgeDir "build.bat"
+    if (Test-Path $buildBat) {
+        Push-Location $bridgeDir
+        try {
+            & cmd.exe /c $buildBat
+            if ($LASTEXITCODE -ne 0) { throw "Bridge build.bat returned error code $LASTEXITCODE" }
+            Write-Host "[OK] Bridge DLL built" -ForegroundColor Green
+        }
+        finally { Pop-Location }
     }
-    finally { Pop-Location }
+    else {
+        Write-Warning "build.bat not found at $buildBat, skipping Bridge build."
+    }
 }
 else {
-    Write-Warning "build.bat not found at $buildBat, skipping Bridge build."
+    Write-Host "[SKIP] Bridge DLL build skipped (-SkipBridge)" -ForegroundColor Yellow
 }
 
-# -----------------------------------------------------------
-# Step 2: Determine version
+Step 2: Determine version
 # -----------------------------------------------------------
 Write-Host ""
 Write-Host "Step 2/4: Determining version..." -ForegroundColor Yellow
 
-# Try latest Git tag first, fall back to 0.0.0
-# Use try/catch because $ErrorActionPreference=Stop treats native command stderr as terminating
-try {
-    $version = & git describe --tags --abbrev=0 2>$null
-    if ($LASTEXITCODE -ne 0) { throw }
-    $version = $version.TrimStart('v')
-    Write-Host "  Git tag: $version" -ForegroundColor Gray
-} catch {
-    $version = "0.0.0"
-    Write-Host "  No git tag found, using 0.0.0" -ForegroundColor Gray
+if ($AppVersion) {
+    $version = $AppVersion
+    Write-Host "  From parameter: $version" -ForegroundColor Gray
+}
+else {
+    # Try latest Git tag first, fall back to 0.0.0
+    try {
+        $version = & git describe --tags --abbrev=0 2>$null
+        if ($LASTEXITCODE -ne 0) { throw }
+        $version = $version.TrimStart('v')
+        Write-Host "  Git tag: $version" -ForegroundColor Gray
+    } catch {
+        $version = "0.0.0"
+        Write-Host "  No git tag found, using 0.0.0" -ForegroundColor Gray
+    }
 }
 
-# -----------------------------------------------------------
-# Step 3: Publish App
+Step 3: Publish App
 # -----------------------------------------------------------
 Write-Host ""
 Write-Host "Step 3/4: Publishing App..." -ForegroundColor Yellow
-Write-Host "       dotnet publish $appProj -c Release -r win-x64 --self-contained false -p:Version=$version"
 
-Push-Location $rootDir
-try {
-    & $dotnet publish $appProj -c Release -r win-x64 --self-contained false -p:Version=$version --nologo
-    if ($LASTEXITCODE -ne 0) { throw "App publish failed" }
-
-    # Locate publish output directory
-    $appPublishDir = Join-Path $rootDir "src\NoiseReduction.App\bin\Release\net10.0-windows\win-x64\publish"
-    if (-not (Test-Path $appPublishDir)) {
-        throw "App publish directory not found: $appPublishDir"
+if (-not $SkipPublish) {
+    Write-Host "       dotnet publish $appProj -c $Configuration -r win-x64 --self-contained false -p:Version=$version"
+    Push-Location $rootDir
+    try {
+        & $dotnet publish $appProj -c $Configuration -r win-x64 --self-contained false -p:Version=$version --nologo
+        if ($LASTEXITCODE -ne 0) { throw "App publish failed" }
+        $appPublishDir = Join-Path $rootDir "src\NoiseReduction.App\bin\$Configuration\net10.0-windows\win-x64\publish"
+        if (-not (Test-Path $appPublishDir)) {
+            throw "App publish directory not found: $appPublishDir"
+        }
+        $fileCount = (Get-ChildItem $appPublishDir -File).Count
+        Write-Host "[OK] App published, $fileCount files" -ForegroundColor Green
     }
-    $fileCount = (Get-ChildItem $appPublishDir -File).Count
-    Write-Host "[OK] App published, $fileCount files" -ForegroundColor Green
+    finally { Pop-Location }
 }
-finally { Pop-Location }
-
-# -----------------------------------------------------------
-# Step 4: Compile Inno Setup installer
+else {
+    Write-Host "[SKIP] dotnet publish skipped (-SkipPublish)" -ForegroundColor Yellow
+}
+Step 4: Compile Inno Setup installer
 # -----------------------------------------------------------
 Write-Host ""
 Write-Host "Step 4/4: Compiling Inno Setup installer..." -ForegroundColor Yellow

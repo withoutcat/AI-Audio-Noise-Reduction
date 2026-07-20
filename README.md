@@ -148,10 +148,30 @@ dotnet run --project src\NoiseReduction.App
 ### Build Installer
 
 ```powershell
+# Default: auto-detect version from git tag, Release configuration
 .\build-installer.ps1
+
+# Override version
+.\build-installer.ps1 -AppVersion "1.3.0"
+
+# Debug build, skip Bridge build
+.\build-installer.ps1 -Configuration Debug -SkipBridge
+
+# Skip dotnet publish (use existing build output)
+.\build-installer.ps1 -SkipPublish
+
+# Full control
+.\build-installer.ps1 -AppVersion "1.3.0" -Configuration Debug -SkipBridge -SkipPublish
 ```
 
-Output: `installer\output\AINoiseReduction-1.0.0-win-x64.exe`
+| Parameter       | Type     | Default    | Description |
+|----------------|----------|------------|-------------|
+| `-AppVersion` | string   | *(git tag)* | Override the version string (e.g. `"1.3.0"`). Falls back to latest git tag, then `0.0.0`. |
+| `-Configuration` | string | `Release`   | Build configuration: `Debug` or `Release`. |
+| `-SkipBridge` | switch   | off        | Skip building the C++ Bridge DLL. Use if the DLL already exists. |
+| `-SkipPublish` | switch   | off        | Skip the `dotnet publish` step. Use if the app was already published. |
+
+Output: `installer\output\AINoiseReduction-{version}-win-x64.exe`aller\output\AINoiseReduction-1.0.0-win-x64.exe`
 
 </details>
 
