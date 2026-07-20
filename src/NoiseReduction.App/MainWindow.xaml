@@ -218,17 +218,29 @@
                         BorderThickness="0"
                         Cursor="Hand"
                         VerticalAlignment="Center" />
-                <Button Content="⬇"
-                        Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}"
+                <Button
+                        Visibility="{Binding DownloadButtonVisible, Converter={StaticResource BoolToVis}}"
                         ToolTip="下载更新"
                         Command="{Binding DownloadUpdateCommand}"
                         Margin="4,0,0,0"
-                        Padding="2,0"
-                        Width="20" Height="20"
+                        Padding="0"
+                        Width="50" Height="20"
                         FontSize="12"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Background="#2D2D2D"
+                        BorderBrush="#6A737D"
+                        BorderThickness="1"
+                        Cursor="Hand">
+                    <Grid>
+                        <Rectangle Fill="#E84393"
+                                   HorizontalAlignment="Left"
+                                   Width="{Binding DownloadProgressWidth}" />
+                        <TextBlock Text="{Binding DownloadButtonContent}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="#B0B8C4" />
+                    </Grid>
+                </Button>
                 </StackPanel>
                 <TextBlock Margin="0,2,0,0"
                            Foreground="#5A6472"

@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.IO;
 using System.Diagnostics;
 using System.Text.Json;
@@ -72,7 +72,15 @@ public class AppUpdaterService
         return new UpdateInfo(tag, downloadUrl);
     }
 
-    public async Task<string> DownloadUpdateAsync(string downloadUrl)
+    /// <summary>Get the expected temp path for a given download URL.</summary>
+    public static string GetExpectedTempPath(string downloadUrl)
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "ANR-update");
+        var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
+        return Path.Combine(tempDir, fileName);
+    }
+
+    public async Task<string> DownloadUpdateAsync(string downloadUrl, IProgress<int>? progress = null)
     {
         AppLogger.Instance.Debug($"开始下载更新, url={downloadUrl}");
         var tempDir = Path.Combine(Path.GetTempPath(), "ANR-update");
@@ -83,15 +91,40 @@ public class AppUpdaterService
 
         using var client = new HttpClient();
         client.Timeout = TimeSpan.FromMinutes(10);
-        var bytes = await client.GetByteArrayAsync(downloadUrl);
-        AppLogger.Instance.Debug($"下载完成, 字节数={bytes.Length}");
-        await File.WriteAllBytesAsync(filePath, bytes);
-        AppLogger.Instance.Debug("更新安装包已写入磁盘");
 
+        // Stream-based download for progress tracking
+        using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+
+        var totalBytes = response.Content.Headers.ContentLength ?? -1;
+        await using var contentStream = await response.Content.ReadAsStreamAsync();
+        await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+
+        var buffer = new byte[8192];
+        long totalRead = 0;
+        int lastReportedPct = -1;
+        int bytesRead;
+        while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+        {
+            await fileStream.WriteAsync(buffer, 0, bytesRead);
+            totalRead += bytesRead;
+
+            if (totalBytes > 0 && progress != null)
+            {
+                int pct = (int)(totalRead * 100 / totalBytes);
+                if (pct != lastReportedPct)
+                {
+                    progress.Report(pct);
+                    lastReportedPct = pct;
+                }
+            }
+        }
+
+        AppLogger.Instance.Debug($"下载完成, 字节数={totalRead}");
         return filePath;
     }
 
-        public void InstallUpdate(string installerPath)
+    public void InstallUpdate(string installerPath)
     {
         AppLogger.Instance.Debug($"启动安装更新, 路径={installerPath}");
 
@@ -111,4 +144,3 @@ public class AppUpdaterService
 }
 
 public record UpdateInfo(string Version, string DownloadUrl);
-

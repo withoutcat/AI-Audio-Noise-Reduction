@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.IO;
 using System.Windows.Threading;
 using NAudio.CoreAudioApi;
 using NoiseReduction.Core.Devices;
@@ -36,6 +37,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _updateAvailable;
     private string? _updateVersion;
     private string? _updateDownloadUrl;
+    private int _downloadProgress;
+    private bool _isDownloading;
     private TimeSpan _lastCpuTime;
     private DateTime _lastCpuCheck;
 
@@ -134,8 +137,46 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public bool UpdateAvailable
     {
         get => _updateAvailable;
-        private set => SetField(ref _updateAvailable, value);
+        private set
+        {
+            if (SetField(ref _updateAvailable, value))
+            {
+                OnPropertyChanged(nameof(DownloadButtonVisible));
+            }
+        }
     }
+
+    public int DownloadProgress
+    {
+        get => _downloadProgress;
+        private set
+        {
+            if (SetField(ref _downloadProgress, value))
+            {
+                OnPropertyChanged(nameof(DownloadProgressWidth));
+                OnPropertyChanged(nameof(DownloadButtonContent));
+            }
+        }
+    }
+
+    public bool IsDownloading
+    {
+        get => _isDownloading;
+        private set
+        {
+            if (SetField(ref _isDownloading, value))
+            {
+                OnPropertyChanged(nameof(DownloadButtonContent));
+                OnPropertyChanged(nameof(DownloadButtonVisible));
+            }
+        }
+    }
+
+    public double DownloadProgressWidth => _downloadProgress * 0.5;
+
+    public string DownloadButtonContent => _isDownloading ? $"{_downloadProgress}%" : "⬇";
+
+    public bool DownloadButtonVisible => _updateAvailable || _isDownloading;
 
     public RelayCommand? DownloadUpdateCommand { get; }
     public RelayCommand? CheckForUpdatesCommand { get; }
@@ -667,14 +708,46 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         if (_updater == null || string.IsNullOrEmpty(_updateDownloadUrl)) return;
         try
         {
+            // Check if already downloaded in temp
+            var cachedPath = AppUpdaterService.GetExpectedTempPath(_updateDownloadUrl);
+            if (File.Exists(cachedPath))
+            {
+                AppLogger.Instance.Info("检测到已下载的安装包，跳过下载");
+                _updater.InstallUpdate(cachedPath);
+                return;
+            }
+
+            IsDownloading = true;
+            DownloadProgress = 0;
             AppLogger.Instance.Info("正在下载更新...");
-            var path = await _updater.DownloadUpdateAsync(_updateDownloadUrl);
+
+            var lastLoggedPct = -1;
+            var progress = new Progress<int>(pct =>
+            {
+                System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                {
+                    DownloadProgress = pct;
+                });
+
+                // Log every 10%
+                if (pct >= lastLoggedPct + 10 || pct == 100)
+                {
+                    AppLogger.Instance.Info($"下载进度: {pct}%");
+                }
+            });
+
+            var path = await _updater.DownloadUpdateAsync(_updateDownloadUrl, progress);
+            DownloadProgress = 100;
             AppLogger.Instance.Info($"更新下载完成: {System.IO.Path.GetFileName(path)}");
             _updater.InstallUpdate(path);
         }
         catch (Exception ex)
         {
             AppLogger.Instance.Error(ex, "下载更新失败");
+        }
+        finally
+        {
+            IsDownloading = false;
         }
     }
 
