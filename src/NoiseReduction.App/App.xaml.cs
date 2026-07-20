@@ -161,14 +161,6 @@ public partial class App : System.Windows.Application
     public void ExitApplication()
     {
         _isExiting = true;
-
-        if (_notifyIcon != null)
-        {
-            _notifyIcon.Visible = false;
-            _notifyIcon.Dispose();
-            _notifyIcon = null;
-        }
-
         Shutdown();
     }
 

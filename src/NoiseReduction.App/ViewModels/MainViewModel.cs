@@ -477,6 +477,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void Stop()
     {
+        if (!_isActive) return;
         _session?.Dispose();
         _session = null;
         _isActive = false;
