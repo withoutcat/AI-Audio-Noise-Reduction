@@ -58,7 +58,7 @@ Write-Host "[OK] .NET SDK: $($dotnet.Source)" -ForegroundColor Green
 
 # -----------------------------------------------------------
 # 
-Step 1: Build Bridge C++ DLL
+# Step 1: Build Bridge C++ DLL
 # -----------------------------------------------------------
 Write-Host ""
 Write-Host "Step 1/4: Building Bridge C++ DLL..." -ForegroundColor Yellow
@@ -82,7 +82,7 @@ else {
     Write-Host "[SKIP] Bridge DLL build skipped (-SkipBridge)" -ForegroundColor Yellow
 }
 
-Step 2: Determine version
+# Step 2: Determine version
 # -----------------------------------------------------------
 Write-Host ""
 Write-Host "Step 2/4: Determining version..." -ForegroundColor Yellow
@@ -104,7 +104,7 @@ else {
     }
 }
 
-Step 3: Publish App
+# Step 3: Publish App
 # -----------------------------------------------------------
 Write-Host ""
 Write-Host "Step 3/4: Publishing App..." -ForegroundColor Yellow
@@ -127,7 +127,7 @@ if (-not $SkipPublish) {
 else {
     Write-Host "[SKIP] dotnet publish skipped (-SkipPublish)" -ForegroundColor Yellow
 }
-Step 4: Compile Inno Setup installer
+# Step 4: Compile Inno Setup installer
 # -----------------------------------------------------------
 Write-Host ""
 Write-Host "Step 4/4: Compiling Inno Setup installer..." -ForegroundColor Yellow
