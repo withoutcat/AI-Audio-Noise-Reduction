@@ -50,7 +50,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     _config = AppConfig.Load();
     _appId = _config.AppId ?? "";
     _debugMode = _config.DebugMode;
-    AppLogger.Instance.MinLevel = _debugMode ? LogLevel.Debug : LogLevel.Info;
     _autoSwitchMic = _config.AutoSwitchMic;
     _ainsMode = _config.LastAinsMode;
     _updater = new AppUpdaterService(GetCurrentVersion());
@@ -192,7 +191,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       {
         _config.DebugMode = value;
         _config.Save();
-        AppLogger.Instance.MinLevel = value ? LogLevel.Debug : LogLevel.Info;
         OnPropertyChanged(nameof(ConnectivityText));
       }
     }
@@ -513,14 +511,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
   }
 
-  internal void ForceStop()
+  public void Stop()
   {
-    if (_isActive) Stop();
-  }
-
-  private void Stop()
-  {
-    if (!_isActive) return;
     _session?.Dispose();
     _session = null;
     _isActive = false;

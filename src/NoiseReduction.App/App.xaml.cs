@@ -174,7 +174,7 @@ public partial class App : System.Windows.Application
       IsExiting = true;
 
       // Stop noise reduction if running, before cleanup
-      ViewModel.ForceStop();
+      ViewModel.Stop();
 
       // Clean up tray icon and exit
       ExitApplication();

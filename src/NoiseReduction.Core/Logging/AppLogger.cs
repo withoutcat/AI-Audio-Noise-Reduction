@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 
 namespace NoiseReduction.Core.Logging;
@@ -16,7 +16,6 @@ public sealed class AppLogger
   private readonly object _lock = new();
   private readonly ObservableCollection<LogEntry> _entries = new();
   private readonly string? _logFilePath;
-  private LogLevel _minLevel = LogLevel.Info;
 
   // ── Static / global access ──────────────────────────────────────
 
@@ -80,12 +79,6 @@ public sealed class AppLogger
     get { lock (_lock) return _entries.ToList(); }
   }
 
-  public LogLevel MinLevel
-  {
-    get => _minLevel;
-    set => _minLevel = value;
-  }
-
   // ── Logging methods ─────────────────────────────────────────────
 
   public void Debug(string message) => Log(LogLevel.Debug, message);
@@ -106,7 +99,6 @@ public sealed class AppLogger
 
   private void Log(LogLevel level, string message)
   {
-    if (level < _minLevel) return;
 
     var entry = new LogEntry(DateTime.Now, level, message);
     lock (_lock)
