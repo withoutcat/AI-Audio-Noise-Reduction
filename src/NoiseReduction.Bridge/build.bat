@@ -80,24 +80,7 @@ echo ========================================
 echo.
 
 REM Compile and link
-cl.exe /nologo ^
-/EHsc ^
-/MT ^
-/O2 ^
-/W3 ^
-/wd4819 ^
-/D WIN32 ^
-/D _WINDOWS ^
-/D AGORARTC_EXPORT ^
-/I "%SDK_INCLUDE%" ^
-/Fo"%OUTPUT_DIR%\bridge.obj" ^
-/Fe"%OUTPUT_DIR%\Bridge.dll" ^
-/LD ^
-"%~dp0bridge.cpp" ^
-"%SDK_LIB%\agora_rtc_sdk.dll.lib" ^
-/link ^
-/LIBPATH:"%SDK_LIB%" ^
-/OUT:"%OUTPUT_DIR%\Bridge.dll"
+cl.exe /nologo /EHsc /MT /O2 /W3 /wd4819 /D WIN32 /D _WINDOWS /D AGORARTC_EXPORT /I "%SDK_INCLUDE%" /Fo"%OUTPUT_DIR%\bridge.obj" /Fe"%OUTPUT_DIR%\Bridge.dll" /LD "%~dp0bridge.cpp" "%SDK_LIB%\agora_rtc_sdk.dll.lib" /link /LIBPATH:"%SDK_LIB%" /OUT:"%OUTPUT_DIR%\Bridge.dll"
 
 if errorlevel 1 (
   echo.
