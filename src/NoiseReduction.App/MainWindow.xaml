@@ -249,15 +249,15 @@
                   VerticalAlignment="Center"/>
           <Button
             Visibility="{Binding DownloadButtonVisible, Converter={StaticResource BoolToVis}}"
-            ToolTip="下载更新"
+            ToolTip="{Binding UpdateReleaseNotes, TargetNullValue=下载更新}"
             Command="{Binding DownloadUpdateCommand}"
             Margin="4,0,0,0"
             Padding="0"
-            Width="80"
+            Width="50"
             Height="20"
             FontSize="11"
-            Background="#1E1E1E"
-            BorderBrush="#6A737D"
+            Background="#EDEEF0"
+            BorderBrush="#D0D7DE"
             BorderThickness="1"
             Cursor="Hand">
             <Grid>
@@ -268,7 +268,7 @@
                          VerticalAlignment="Center"
                          HorizontalAlignment="Center"
                          FontSize="11"
-                         Foreground="#B0B8C4"/>
+                         Foreground="#3D444D"/>
             </Grid>
           </Button>
           <TextBlock

@@ -144,6 +144,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       if (SetField(ref _updateAvailable, value))
       {
         OnPropertyChanged(nameof(DownloadButtonVisible));
+        OnPropertyChanged(nameof(DownloadButtonContent));
       }
     }
   }
