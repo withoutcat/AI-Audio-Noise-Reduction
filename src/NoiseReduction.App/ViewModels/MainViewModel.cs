@@ -37,6 +37,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   private bool _updateAvailable;
   private string? _updateVersion;
   private string? _updateDownloadUrl;
+#pragma warning disable CS0649, CS0169
+  private string? _updateReleaseNotes;
+  private string? _localInstallerPath;
   private int _downloadProgress;
   private bool _isDownloading;
   private TimeSpan _lastCpuTime;
@@ -173,7 +176,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
   public double DownloadProgressWidth => _downloadProgress * 0.5;
 
-  public string DownloadButtonContent => _isDownloading ? $"{_downloadProgress}%" : "⬇";
+  public string DownloadButtonContent => _isDownloading ? $"{_downloadProgress}%" : _updateAvailable && _localInstallerPath != null ? $"安装v{_updateVersion}" : _updateAvailable ? $"下载v{_updateVersion}" : "⬇";
 
   public bool DownloadButtonVisible => _updateAvailable || _isDownloading;
 
@@ -747,4 +750,5 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   {
     _ = CheckForUpdateAsync();
   }
+#pragma warning restore CS0649, CS0169
 }

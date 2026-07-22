@@ -253,10 +253,10 @@
             Command="{Binding DownloadUpdateCommand}"
             Margin="4,0,0,0"
             Padding="0"
-            Width="50"
+            Width="80"
             Height="20"
-            FontSize="12"
-            Background="#2D2D2D"
+            FontSize="11"
+            Background="#1E1E1E"
             BorderBrush="#6A737D"
             BorderThickness="1"
             Cursor="Hand">
@@ -267,10 +267,19 @@
               <TextBlock Text="{Binding DownloadButtonContent}"
                          VerticalAlignment="Center"
                          HorizontalAlignment="Center"
-                         FontSize="12"
+                         FontSize="11"
                          Foreground="#B0B8C4"/>
             </Grid>
           </Button>
+          <TextBlock
+            Text="{Binding UpdateReleaseNotes}"
+            Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}"
+            MaxHeight="80"
+            TextWrapping="Wrap"
+            FontSize="10"
+            Foreground="#5A6472"
+            Margin="4,2,0,0"
+            TextTrimming="CharacterEllipsis"/>
         </StackPanel>
         <TextBlock Margin="0,2,0,0"
                    Foreground="#5A6472"
