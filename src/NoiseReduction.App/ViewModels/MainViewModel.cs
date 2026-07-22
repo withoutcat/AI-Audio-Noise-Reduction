@@ -179,6 +179,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   public string DownloadButtonContent => _isDownloading ? $"{_downloadProgress}%" : _updateAvailable && _localInstallerPath != null ? $"安装v{_updateVersion}" : _updateAvailable ? $"下载v{_updateVersion}" : "⬇";
 
   public bool DownloadButtonVisible => _updateAvailable || _isDownloading;
+  public string? UpdateReleaseNotes => _updateReleaseNotes;
 
   public RelayCommand? DownloadUpdateCommand { get; }
   public RelayCommand? CheckForUpdatesCommand { get; }
@@ -685,6 +686,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       {
         _updateVersion = info.Version;
         _updateDownloadUrl = info.DownloadUrl;
+        _updateReleaseNotes = info.ReleaseNotes;
+        _localInstallerPath = info.LocalPath;
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
           UpdateAvailable = true;
@@ -704,11 +707,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     try
     {
       // Check if already downloaded in temp
-      var cachedPath = AppUpdaterService.GetExpectedTempPath(_updateDownloadUrl);
-      if (File.Exists(cachedPath))
+      if (_localInstallerPath != null && File.Exists(_localInstallerPath))
       {
-        AppLogger.Instance.Info("检测到已下载的安装包，跳过下载");
-        _updater.InstallUpdate(cachedPath);
+        AppLogger.Instance.Info($"本地缓存有效，直接安装: {System.IO.Path.GetFileName(_localInstallerPath)}");
+        _updater.InstallUpdate(_localInstallerPath);
         return;
       }
 
