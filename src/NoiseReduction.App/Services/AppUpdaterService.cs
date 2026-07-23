@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.IO;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -60,7 +60,7 @@ public class AppUpdaterService
     }
 
     var current = Version.Parse(_currentVersion);
-    if (latestVersion <= current)
+    if (latestVersion < current)
     {
       AppLogger.Instance.Debug($"当前版本已是最新: current={current}, latest={latestVersion}");
       return null;

@@ -683,19 +683,47 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       var info = await _updater.CheckForUpdateAsync();
       if (info != null)
       {
-        _updateVersion = info.Version;
-        _updateDownloadUrl = info.DownloadUrl;
-        _updateReleaseNotes = info.ReleaseNotes;
-        _localInstallerPath = info.LocalPath;
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        var currentVersion = typeof(MainViewModel).Assembly.GetName().Version;
+        if (Version.TryParse(info.Version, out var latestVersion) && currentVersion != null)
         {
-          UpdateAvailable = true;
-          AppLogger.Instance.Info($"发现新版本 v{info.Version}");
-          if (!string.IsNullOrEmpty(_updateReleaseNotes))
+          if (latestVersion > currentVersion)
           {
-            AppLogger.Instance.Info($"发布说明: {_updateReleaseNotes}");
+            _updateVersion = info.Version;
+            _updateDownloadUrl = info.DownloadUrl;
+            _updateReleaseNotes = info.ReleaseNotes;
+            _localInstallerPath = info.LocalPath;
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+              UpdateAvailable = true;
+              AppLogger.Instance.Info($"发现新版本 v{info.Version}");
+              if (!string.IsNullOrEmpty(_updateReleaseNotes))
+              {
+                AppLogger.Instance.Info($"发布说明: {_updateReleaseNotes}");
+              }
+            });
           }
-        });
+          else if (latestVersion == currentVersion)
+          {
+            var expectedPath = AppUpdaterService.GetExpectedTempPath(info.DownloadUrl);
+            bool tampered = false;
+            if (File.Exists(expectedPath) && !string.IsNullOrEmpty(info.Sha256))
+            {
+              var localSha256 = AppUpdaterService.ComputeSha256(expectedPath);
+              tampered = !string.Equals(localSha256, info.Sha256, StringComparison.OrdinalIgnoreCase);
+            }
+            AppLogger.Instance.Info(tampered
+              ? "已经是最新版本，但是你的本地版本被篡改过！强烈建议下载安装最新官方版本：https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases"
+              : "已经是最新版本啦~");
+          }
+        }
+        else
+        {
+          AppLogger.Instance.Info("已经是最新版本啦~");
+        }
+      }
+      else
+      {
+        AppLogger.Instance.Info("已经是最新版本啦~");
       }
     }
     catch (Exception ex)
