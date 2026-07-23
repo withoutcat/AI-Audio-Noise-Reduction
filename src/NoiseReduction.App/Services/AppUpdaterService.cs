@@ -198,14 +198,23 @@ public class AppUpdaterService
     var tempDir = Path.Combine(Path.GetTempPath(), "ANR-update");
     if (!Directory.Exists(tempDir)) return false;
 
+    if (!Version.TryParse(expectedVersion, out var expVer)) return false;
+
     foreach (var exeFile in Directory.EnumerateFiles(tempDir, "*.exe", SearchOption.AllDirectories))
     {
       try
       {
         var fvi = FileVersionInfo.GetVersionInfo(exeFile);
         if (fvi.ProductName?.Trim() != "AI Noise Reduction") continue;
+
         var productVersion = fvi.ProductVersion?.Trim();
-        if (productVersion != expectedVersion) continue;
+        if (string.IsNullOrEmpty(productVersion)) continue;
+        if (!Version.TryParse(productVersion, out var fileVer)) continue;
+
+        // File version must be >= expected (handles "1.2.0.0" vs "1.2.0" correctly)
+        if (fileVer < expVer) continue;
+
+        AppLogger.Instance.Debug($"检查文件SHA256: {exeFile}, productVersion={productVersion}");
 
         // Same product + version, check SHA256
         var localSha256 = ComputeSha256(exeFile);
