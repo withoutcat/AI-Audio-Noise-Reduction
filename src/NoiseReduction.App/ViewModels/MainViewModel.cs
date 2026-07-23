@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.IO;
 using System.Windows.Threading;
-using NAudio.CoreAudioApi;
 using NoiseReduction.Core.Devices;
 using NoiseReduction.Core.Logging;
 using NoiseReduction.Core.Pipeline;
@@ -37,7 +36,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   private bool _updateAvailable;
   private string? _updateVersion;
   private string? _updateDownloadUrl;
-#pragma warning disable CS0649, CS0169
   private string? _updateReleaseNotes;
   private string? _localInstallerPath;
   private int _downloadProgress;
@@ -753,9 +751,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
   }
 
-  private void OnCheckForUpdates()
+  private async void OnCheckForUpdates()
   {
-    _ = CheckForUpdateAsync();
+    await CheckForUpdateAsync();
   }
-#pragma warning restore CS0649, CS0169
 }
