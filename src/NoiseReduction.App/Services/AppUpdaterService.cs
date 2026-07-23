@@ -102,7 +102,7 @@ public class AppUpdaterService
     // Check if local cache already has a valid installer
     var localPath = FindLocalInstaller(downloadUrl, sha256, tag, _currentVersion);
     if (localPath != null)
-      AppLogger.Instance.Debug($"本地缓存有效: {localPath}");
+      AppLogger.Instance.Debug($"发现本地安装包: {localPath}");
 
     AppLogger.Instance.Debug($"更新可用: latest={tag}, sha256={sha256}");
     return new UpdateInfo(tag, downloadUrl, releaseNotes, sha256, localPath);
