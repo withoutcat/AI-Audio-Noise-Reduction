@@ -683,7 +683,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       var info = await _updater.CheckForUpdateAsync();
       if (info != null)
       {
-        var currentVersion = typeof(MainViewModel).Assembly.GetName().Version;
+        var currentVersion = Version.Parse(GetCurrentVersion());
         if (Version.TryParse(info.Version, out var latestVersion) && currentVersion != null)
         {
           if (latestVersion > currentVersion)
