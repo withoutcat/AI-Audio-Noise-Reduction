@@ -134,22 +134,24 @@ public class AppUpdaterService
     {
       // Check ProductName + ProductVersion from file metadata
       var fvi = FileVersionInfo.GetVersionInfo(filePath);
-      if (fvi.ProductName != "AI Noise Reduction")
+      AppLogger.Instance.Debug($"检查本地安装包信息: {fvi}");
+      AppLogger.Instance.Debug($"  ProductName={fvi.ProductName}, ProductVersion={fvi.ProductVersion}");
+      if (fvi.ProductName?.Trim() != "AI Noise Reduction")
       {
         AppLogger.Instance.Debug($"  文件 ProductName 不匹配: {fvi.ProductName}");
         return false;
       }
 
-      var fileVersion = fvi.ProductVersion;
-      if (fileVersion == null || !Version.TryParse(fileVersion, out var parsedVersion))
+      var productVersion = fvi.ProductVersion;
+      if (productVersion == null || !Version.TryParse(productVersion, out var parsedVersion))
       {
-        AppLogger.Instance.Debug($"  文件 ProductVersion 无效: {fileVersion}");
+        AppLogger.Instance.Debug($"  文件 ProductVersion 无效: {productVersion}");
         return false;
       }
 
       if (parsedVersion <= Version.Parse(currentVersion))
       {
-        AppLogger.Instance.Debug($"  文件版本 ({fileVersion}) 不大于当前版本 ({currentVersion})");
+        AppLogger.Instance.Debug($"  文件版本 ({productVersion}) 不大于当前版本 ({currentVersion})");
         return false;
       }
 
@@ -164,7 +166,7 @@ public class AppUpdaterService
         }
       }
 
-      AppLogger.Instance.Debug($"  本地缓存验证通过: {filePath}, version={fileVersion}");
+      AppLogger.Instance.Debug($"  本地缓存验证通过: {filePath}, version={productVersion}");
       return true;
     }
     catch (Exception ex)

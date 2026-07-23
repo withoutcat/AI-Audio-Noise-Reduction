@@ -520,10 +520,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   {
     _session?.Dispose();
     _session = null;
-    if (_isActive)
-    {
-      AppLogger.Instance.Info("AI降噪已停止");
-    }
     _isActive = false;
     _statsTimer.Stop();
     _cpuUsage = 0;
