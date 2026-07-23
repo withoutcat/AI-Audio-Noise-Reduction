@@ -218,6 +218,7 @@ public class AppUpdaterService
 
         // Same product + version, check SHA256
         var localSha256 = ComputeSha256(exeFile);
+        AppLogger.Instance.Debug($"  localSHA256={localSha256}, expectedSHA256={expectedSha256}");
         if (!string.Equals(localSha256, expectedSha256, StringComparison.OrdinalIgnoreCase))
         {
           AppLogger.Instance.Debug($"发现篡改文件: {exeFile}, localSha256={localSha256}, expected={expectedSha256}");
