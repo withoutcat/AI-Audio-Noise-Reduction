@@ -249,7 +249,7 @@
                   VerticalAlignment="Center"/>
           <Button
             Visibility="{Binding DownloadButtonVisible, Converter={StaticResource BoolToVis}}"
-            ToolTip="{Binding UpdateReleaseNotes, TargetNullValue=下载更新}"
+            ToolTip="查看发布说明"
             Command="{Binding DownloadUpdateCommand}"
             Margin="4,0,0,0"
             Padding="0"

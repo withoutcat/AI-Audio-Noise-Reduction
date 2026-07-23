@@ -144,6 +144,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       if (SetField(ref _updateAvailable, value))
       {
         OnPropertyChanged(nameof(DownloadButtonVisible));
+        OnPropertyChanged(nameof(UpdateReleaseNotes));
         OnPropertyChanged(nameof(DownloadButtonContent));
       }
     }
@@ -171,13 +172,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       {
         OnPropertyChanged(nameof(DownloadButtonContent));
         OnPropertyChanged(nameof(DownloadButtonVisible));
+        OnPropertyChanged(nameof(UpdateReleaseNotes));
       }
     }
   }
 
   public double DownloadProgressWidth => _downloadProgress * 0.5;
 
-  public string DownloadButtonContent => _isDownloading ? $"{_downloadProgress}%" : _updateAvailable && _localInstallerPath != null ? $"安装v{_updateVersion}" : _updateAvailable ? $"下载v{_updateVersion}" : "⬇";
+  public string DownloadButtonContent => _isDownloading ? $"{_downloadProgress}%" : _updateAvailable && _localInstallerPath != null ? "安装" : _updateAvailable ? "下载" : "⬇";
 
   public bool DownloadButtonVisible => _updateAvailable || _isDownloading;
   public string? UpdateReleaseNotes => _updateReleaseNotes;
@@ -692,6 +694,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
           UpdateAvailable = true;
           AppLogger.Instance.Info($"发现新版本 v{info.Version}");
+          if (!string.IsNullOrEmpty(_updateReleaseNotes))
+          {
+            AppLogger.Instance.Info($"发布说明: {_updateReleaseNotes}");
+          }
         });
       }
     }
@@ -703,7 +709,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
   private async void OnDownloadUpdate()
   {
-    if (_updater == null || string.IsNullOrEmpty(_updateDownloadUrl)) return;
+    if (_updater == null || string.IsNullOrEmpty(_updateDownloadUrl) || _isDownloading) return;
     try
     {
       // Check if already downloaded in temp
