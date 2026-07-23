@@ -704,13 +704,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
           }
           else if (latestVersion == currentVersion)
           {
-            var expectedPath = AppUpdaterService.GetExpectedTempPath(info.DownloadUrl);
-            bool tampered = false;
-            if (File.Exists(expectedPath) && !string.IsNullOrEmpty(info.Sha256))
-            {
-              var localSha256 = AppUpdaterService.ComputeSha256(expectedPath);
-              tampered = !string.Equals(localSha256, info.Sha256, StringComparison.OrdinalIgnoreCase);
-            }
+            bool tampered = !string.IsNullOrEmpty(info.Sha256) &&
+                AppUpdaterService.CheckForTamperedInstaller(info.DownloadUrl, info.Sha256, info.Version);
+
             AppLogger.Instance.Info(tampered
               ? "已经是最新版本，但是你的本地版本被篡改过！强烈建议下载安装最新官方版本：https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases"
               : "已经是最新版本啦~");

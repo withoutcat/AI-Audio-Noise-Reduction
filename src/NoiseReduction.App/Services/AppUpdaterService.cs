@@ -192,6 +192,34 @@ public class AppUpdaterService
     return null;
   }
 
+  /// <summary>Check if any exe in the temp dir has matching product info but different SHA256 (tampered).</summary>
+  public static bool CheckForTamperedInstaller(string downloadUrl, string expectedSha256, string expectedVersion)
+  {
+    var tempDir = Path.Combine(Path.GetTempPath(), "ANR-update");
+    if (!Directory.Exists(tempDir)) return false;
+
+    foreach (var exeFile in Directory.EnumerateFiles(tempDir, "*.exe", SearchOption.AllDirectories))
+    {
+      try
+      {
+        var fvi = FileVersionInfo.GetVersionInfo(exeFile);
+        if (fvi.ProductName?.Trim() != "AI Noise Reduction") continue;
+        var productVersion = fvi.ProductVersion?.Trim();
+        if (productVersion != expectedVersion) continue;
+
+        // Same product + version, check SHA256
+        var localSha256 = ComputeSha256(exeFile);
+        if (!string.Equals(localSha256, expectedSha256, StringComparison.OrdinalIgnoreCase))
+        {
+          AppLogger.Instance.Debug($"发现篡改文件: {exeFile}, localSha256={localSha256}, expected={expectedSha256}");
+          return true;
+        }
+      }
+      catch { }
+    }
+    return false;
+  }
+
   public async Task<string> DownloadUpdateAsync(string downloadUrl, IProgress<int>? progress = null)
   {
     AppLogger.Instance.Debug($"开始下载更新, url={downloadUrl}");
