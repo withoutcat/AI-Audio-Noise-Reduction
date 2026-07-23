@@ -89,9 +89,11 @@ public sealed class AppLogger
   /// <summary>Log an exception at Error level with full stack trace.</summary>
   public void Error(Exception ex, string? message = null)
   {
-    Log(LogLevel.Error, FormatException(ex, message));
+    // Short message at Warn level (always visible in UI)
+    Log(LogLevel.Warn, string.IsNullOrEmpty(message) ? ex.GetType().Name : message!);
+    // Full stack trace at Debug level (UI only in debug mode, always in file)
+    Log(LogLevel.Debug, FormatException(ex, message));
   }
-
   private static string FormatException(Exception ex, string? message)
   {
     return string.IsNullOrEmpty(message) ? ex.ToString() : $"{message}\n{ex}";

@@ -26,7 +26,7 @@ public partial class App : System.Windows.Application
   private WF.NotifyIcon? _notifyIcon;
 
   /// <summary>Shared ViewModel, created once at startup.</summary>
-  public MainViewModel ViewModel { get; private set; } = null!;
+    public MainViewModel ViewModel { get; private set; } = null!;
 
   public bool IsExiting { get; private set; }
   public bool InstallerLaunched { get; set; }
@@ -170,12 +170,6 @@ public partial class App : System.Windows.Application
 
     if (InstallerLaunched)
     {
-      // Installer is waiting - graceful shutdown
-      IsExiting = true;
-
-      // Stop noise reduction if running, before cleanup
-      ViewModel.Stop();
-
       // Clean up tray icon and exit
       ExitApplication();
       return;
@@ -212,6 +206,8 @@ public partial class App : System.Windows.Application
   protected override void OnExit(ExitEventArgs e)
   {
     ViewModel?.Dispose();
+    // Stop noise reduction if running, before cleanup
+    ViewModel?.Stop();
 
     if (_notifyIcon != null)
     {

@@ -520,6 +520,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   {
     _session?.Dispose();
     _session = null;
+    if (_isActive)
+    {
+      AppLogger.Instance.Info("AI降噪已停止");
+    }
     _isActive = false;
     _statsTimer.Stop();
     _cpuUsage = 0;
@@ -532,7 +536,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       RestoreOriginalMic();
       _originalDefaultMicId = null;
     }
-
     StatusMessage = "降噪已停止";
     RaiseStateChanged();
   }
@@ -711,7 +714,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       if (_localInstallerPath != null && File.Exists(_localInstallerPath))
       {
         AppLogger.Instance.Info($"本地缓存有效，直接安装: {System.IO.Path.GetFileName(_localInstallerPath)}");
-        _updater.InstallUpdate(_localInstallerPath);
+        AppUpdaterService.InstallUpdate(_localInstallerPath);
         return;
       }
 
@@ -737,7 +740,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       var path = await _updater.DownloadUpdateAsync(_updateDownloadUrl, progress);
       DownloadProgress = 100;
       AppLogger.Instance.Info($"更新下载完成: {System.IO.Path.GetFileName(path)}");
-      _updater.InstallUpdate(path);
+      AppUpdaterService.InstallUpdate(path);
     }
     catch (Exception ex)
     {
