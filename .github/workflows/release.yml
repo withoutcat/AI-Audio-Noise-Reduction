@@ -81,6 +81,7 @@ jobs:
             -c ${{ env.CONFIGURATION }} `
             -r ${{ env.RID }} `
             --self-contained false `
+            -p:Version=${{ steps.version.outputs.version }} `
             --nologo
 
       - name: Verify App publish output
