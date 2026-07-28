@@ -117,7 +117,6 @@ public partial class App : System.Windows.Application
 
   public void ShowMainWindow()
   {
-    _mainWindow!.ShowInTaskbar = true;
     if (_miniBarWindow != null && _miniBarWindow.IsVisible)
     {
       _mainWindow!.Left = _miniBarWindow.Left;
@@ -152,14 +151,9 @@ public partial class App : System.Windows.Application
 
   public void MinimizeToTray()
   {
-    if (_mainWindow != null)
-    {
-      _mainWindow.WindowState = WindowState.Minimized;
-      _mainWindow.ShowInTaskbar = false;
-    }
+    _mainWindow?.Hide();
     _miniBarWindow?.Hide();
   }
-
   public void RestoreFromTray()
   {
     // Restore whichever window mode was last active
@@ -176,7 +170,6 @@ public partial class App : System.Windows.Application
     else
     {
       // Neither is visible — show main window by default
-      _mainWindow!.ShowInTaskbar = true;
       ShowMainWindow();
     }
   }
