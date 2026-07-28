@@ -60,7 +60,7 @@ public class AppUpdaterService
     }
 
     var current = Version.Parse(_currentVersion);
-    if (latestVersion < current)
+    if (latestVersion <= current)
     {
       AppLogger.Instance.Debug($"当前版本已是最新: current={current}, latest={latestVersion}");
       return null;
@@ -214,11 +214,8 @@ public class AppUpdaterService
         // File version must be >= expected (handles "1.2.0.0" vs "1.2.0" correctly)
         if (fileVer < expVer) continue;
 
-        AppLogger.Instance.Debug($"检查文件SHA256: {exeFile}, productVersion={productVersion}");
-
         // Same product + version, check SHA256
         var localSha256 = ComputeSha256(exeFile);
-        AppLogger.Instance.Debug($"  localSHA256={localSha256}, expectedSHA256={expectedSha256}");
         if (!string.Equals(localSha256, expectedSha256, StringComparison.OrdinalIgnoreCase))
         {
           AppLogger.Instance.Debug($"发现篡改文件: {exeFile}, localSha256={localSha256}, expected={expectedSha256}");

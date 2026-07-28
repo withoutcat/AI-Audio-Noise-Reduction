@@ -40,6 +40,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   private string? _localInstallerPath;
   private int _downloadProgress;
   private bool _isDownloading;
+  private bool _isTamperedCached;
   private TimeSpan _lastCpuTime;
   private DateTime _lastCpuCheck;
 
@@ -176,7 +177,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
   public double DownloadProgressWidth => _downloadProgress * 0.5;
 
-  public string DownloadButtonContent => _isDownloading ? $"{_downloadProgress}%" : _updateAvailable && _localInstallerPath != null ? "安装" : _updateAvailable ? "下载" : "⬇";
+  public string DownloadButtonContent => _isDownloading ? $"{_downloadProgress}%" : _updateAvailable && _localInstallerPath != null ? "安装" : _updateAvailable && _isTamperedCached ? "⚠️安装" : _updateAvailable ? "下载" : "⬇";
 
   public bool DownloadButtonVisible => _updateAvailable || _isDownloading;
   public string? UpdateReleaseNotes => _updateReleaseNotes;
@@ -675,7 +676,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     return typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
   }
 
-  private async Task CheckForUpdateAsync()
+    private async Task CheckForUpdateAsync()
   {
     if (_updater == null) return;
     try
@@ -692,34 +693,32 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             _updateDownloadUrl = info.DownloadUrl;
             _updateReleaseNotes = info.ReleaseNotes;
             _localInstallerPath = info.LocalPath;
+
+            // Check for tampered cached installer (version matches but SHA256 differs)
+            bool tamperedCache = false;
+            if (_localInstallerPath == null && !string.IsNullOrEmpty(info.Sha256))
+            {
+              tamperedCache = AppUpdaterService.CheckForTamperedInstaller(info.DownloadUrl, info.Sha256, info.Version);
+            }
+
             System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
               UpdateAvailable = true;
+              _isTamperedCached = tamperedCache;
+              OnPropertyChanged(nameof(DownloadButtonContent));
+
               AppLogger.Instance.Info($"发现新版本 v{info.Version}");
               if (!string.IsNullOrEmpty(_updateReleaseNotes))
               {
                 AppLogger.Instance.Info($"发布说明: {_updateReleaseNotes}");
               }
+              if (tamperedCache)
+              {
+                AppLogger.Instance.Info("本地安装包被篡改，强烈建议去 GitHub 下载最新版本：https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases");
+              }
             });
           }
-          else if (latestVersion == currentVersion)
-          {
-            bool tampered = !string.IsNullOrEmpty(info.Sha256) &&
-                AppUpdaterService.CheckForTamperedInstaller(info.DownloadUrl, info.Sha256, info.Version);
-
-            AppLogger.Instance.Info(tampered
-              ? "已经是最新版本，但是你的本地版本被篡改过！强烈建议下载安装最新官方版本：https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases"
-              : "已经是最新版本啦~");
-          }
         }
-        else
-        {
-          AppLogger.Instance.Info("已经是最新版本啦~");
-        }
-      }
-      else
-      {
-        AppLogger.Instance.Info("已经是最新版本啦~");
       }
     }
     catch (Exception ex)
@@ -727,8 +726,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       AppLogger.Instance.Debug($"检查更新失败: {ex.Message}");
     }
   }
-
-  private async void OnDownloadUpdate()
+private async void OnDownloadUpdate()
   {
     if (_updater == null || string.IsNullOrEmpty(_updateDownloadUrl) || _isDownloading) return;
     try
