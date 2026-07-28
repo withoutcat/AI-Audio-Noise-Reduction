@@ -12,6 +12,8 @@ public partial class App : System.Windows.Application
 {
   private static readonly Mutex _mutex = new(true, "NoiseReductionApp_5F3A2B1C");
 
+  private static readonly EventWaitHandle _restoreEvent = new(false, EventResetMode.AutoReset, "NoiseReductionApp_Restore_5F3A2B1C");
+
   [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
   private static extern IntPtr AddDllDirectory(string lpPathName);
 
@@ -19,19 +21,6 @@ public partial class App : System.Windows.Application
   private static extern bool SetDefaultDllDirectories(uint directoryFlags);
 
   private const uint LOAD_LIBRARY_SEARCH_DEFAULT_DIRS = 0x00001000;
-
-  [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-  private static extern IntPtr FindWindow(string? lpClassName, string lpWindowName);
-
-  [DllImport("user32.dll")]
-  [return: MarshalAs(UnmanagedType.Bool)]
-  private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-  [DllImport("user32.dll")]
-  [return: MarshalAs(UnmanagedType.Bool)]
-  private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-  private const int SW_RESTORE = 9;
 
 
 
@@ -85,15 +74,10 @@ public partial class App : System.Windows.Application
       AddDllDirectory(nativeDir);
     }
 
-    // Prevent multiple instances - bring existing window to front instead of blocking
+    // Prevent multiple instances - signal existing instance to restore
     if (!_mutex.WaitOne(TimeSpan.Zero, true))
     {
-      var hWnd = FindWindow(null, "AI Noise Reduction");
-      if (hWnd != IntPtr.Zero)
-      {
-        ShowWindow(hWnd, SW_RESTORE);
-        SetForegroundWindow(hWnd);
-      }
+      try { _restoreEvent.Set(); } catch { }
       Shutdown();
       return;
     }
@@ -108,6 +92,8 @@ public partial class App : System.Windows.Application
 
     _mainWindow.Closing += OnWindowClosing;
     _miniBarWindow.Closing += OnWindowClosing;
+
+    StartRestoreListener();
 
     base.OnStartup(e);
     _mainWindow.Show();
@@ -151,10 +137,7 @@ public partial class App : System.Windows.Application
 
   public void MinimizeToTray()
   {
-    if (_mainWindow != null)
-    {
-      _mainWindow.WindowState = WindowState.Minimized;
-    }
+    _mainWindow?.Hide();
     _miniBarWindow?.Hide();
   }
   public void RestoreFromTray()
@@ -175,6 +158,28 @@ public partial class App : System.Windows.Application
       // Neither is visible — show main window by default
       ShowMainWindow();
     }
+  }
+
+  private void StartRestoreListener()
+  {
+    var disp = Dispatcher;
+    var thread = new Thread(() =>
+    {
+      while (true)
+      {
+        try
+        {
+          _restoreEvent.WaitOne();
+          disp.Invoke(RestoreFromTray);
+        }
+        catch
+        {
+          break;
+        }
+      }
+    });
+    thread.IsBackground = true;
+    thread.Start();
   }
 
   public void ExitApplication()

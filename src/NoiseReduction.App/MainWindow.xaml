@@ -55,7 +55,6 @@
                 Height="24"
                 Padding="0"
                 FontSize="14"
-                Background="Transparent"
                 BorderThickness="0"
                 Cursor="Hand"
                 ToolTip="{Binding TopMostTooltip}"
