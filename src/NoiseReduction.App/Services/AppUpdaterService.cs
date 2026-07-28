@@ -63,6 +63,7 @@ public class AppUpdaterService
     if (latestVersion <= current)
     {
       AppLogger.Instance.Debug($"当前版本已是最新: current={current}, latest={latestVersion}");
+      AppLogger.Instance.Info($"已经是最新版了喵~");
       return null;
     }
 

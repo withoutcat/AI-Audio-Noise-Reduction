@@ -169,4 +169,10 @@ public partial class MainWindow : Window
     }
     base.OnClosing(e);
   }
+
+  // Minimize to taskbar (not tray)
+  private void OnMinimizeClick(object sender, RoutedEventArgs e)
+  {
+    WindowState = WindowState.Minimized;
+  }
 }

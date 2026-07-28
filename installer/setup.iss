@@ -129,6 +129,9 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 [Dirs]
 Name: "{app}\logs"; Permissions: users-modify
 
+[Run]
+Filename: "{app}\{#AppExeName}"; Description: "运行 {#AppName}"; Flags: postinstall nowait skipifsilent shellexec
+
 [Code]
 var
   DownloadPage: TDownloadWizardPage;

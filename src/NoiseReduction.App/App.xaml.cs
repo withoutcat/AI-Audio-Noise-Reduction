@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Threading;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -19,6 +19,21 @@ public partial class App : System.Windows.Application
   private static extern bool SetDefaultDllDirectories(uint directoryFlags);
 
   private const uint LOAD_LIBRARY_SEARCH_DEFAULT_DIRS = 0x00001000;
+
+  [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+  private static extern IntPtr FindWindow(string? lpClassName, string lpWindowName);
+
+  [DllImport("user32.dll")]
+  [return: MarshalAs(UnmanagedType.Bool)]
+  private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+  [DllImport("user32.dll")]
+  [return: MarshalAs(UnmanagedType.Bool)]
+  private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+  private const int SW_RESTORE = 9;
+
+
 
   // ── Window & tray management ─────────────────────────────────────
   private MainWindow? _mainWindow;
@@ -70,11 +85,15 @@ public partial class App : System.Windows.Application
       AddDllDirectory(nativeDir);
     }
 
-    // Prevent multiple instances
+    // Prevent multiple instances - bring existing window to front instead of blocking
     if (!_mutex.WaitOne(TimeSpan.Zero, true))
     {
-      System.Windows.MessageBox.Show("AI Noise Reduction 已运行中。", "提示",
-          System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+      var hWnd = FindWindow(null, "AI Noise Reduction");
+      if (hWnd != IntPtr.Zero)
+      {
+        ShowWindow(hWnd, SW_RESTORE);
+        SetForegroundWindow(hWnd);
+      }
       Shutdown();
       return;
     }
