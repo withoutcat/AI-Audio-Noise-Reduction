@@ -89,7 +89,7 @@
                 Background="Transparent"
                 BorderThickness="0"
                 Cursor="Hand"
-                ToolTip="最小化到托盘"
+                ToolTip="隐藏到托盘"
                 Click="OnMinimizeToTrayClick"/>
       </StackPanel>
     </Grid>
