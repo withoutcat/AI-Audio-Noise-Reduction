@@ -1,4 +1,4 @@
-﻿<Window x:Class="NoiseReduction.App.MainWindow"
+<Window x:Class="NoiseReduction.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
@@ -44,12 +44,6 @@
                    Foreground="#E84393"
                    Margin="8,0,0,0"
                    VerticalAlignment="Center"/>
-      </StackPanel>
-
-      <!-- Window control buttons -->
-      <StackPanel Orientation="Horizontal"
-                  HorizontalAlignment="Right"
-                  VerticalAlignment="Top">
         <Button Content="{Binding TopMostIcon}"
                 Width="24"
                 Height="24"
@@ -58,8 +52,15 @@
                 Background="Transparent"
                 BorderThickness="0"
                 Cursor="Hand"
+                Margin="8,0,0,0"
                 ToolTip="{Binding TopMostTooltip}"
                 Click="OnTopMostClick"/>
+      </StackPanel>
+
+      <!-- Window control buttons -->
+      <StackPanel Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Top">
         <Button Content="❐"
                 Width="24"
                 Height="24"
