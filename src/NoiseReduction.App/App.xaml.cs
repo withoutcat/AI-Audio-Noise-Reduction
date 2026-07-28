@@ -151,7 +151,10 @@ public partial class App : System.Windows.Application
 
   public void MinimizeToTray()
   {
-    _mainWindow?.Hide();
+    if (_mainWindow != null)
+    {
+      _mainWindow.WindowState = WindowState.Minimized;
+    }
     _miniBarWindow?.Hide();
   }
   public void RestoreFromTray()

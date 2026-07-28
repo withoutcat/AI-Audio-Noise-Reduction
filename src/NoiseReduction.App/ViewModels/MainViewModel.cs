@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -277,7 +277,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       (typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.0.0");
 
   public string TopMostTooltip => _isTopMost ? "放我下来" : "把我举高高";
-  public string TopMostIcon => _isTopMost ? "📌" : "📍";
+  public string TopMostIcon => "📌";
 
   public string ResourceText
   {
