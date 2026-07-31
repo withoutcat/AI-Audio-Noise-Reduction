@@ -61,6 +61,7 @@
               Width="20"
               Height="20"
               Padding="0"
+              Margin="4,0,0,0"
               Click="OnTopMostClick"
               ToolTip="{Binding TopMostTooltip}"
               BorderThickness="0"
