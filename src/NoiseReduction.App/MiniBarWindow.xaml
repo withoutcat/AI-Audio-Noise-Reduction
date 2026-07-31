@@ -3,10 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="AI Noise Reduction"
-        Width="256"
+        Width="Auto"
         Height="40"
         WindowStyle="None"
         ResizeMode="NoResize"
+        SizeToContent="Width"
         WindowStartupLocation="Manual"
         Background="{StaticResource SurfaceBrush}"
         BorderBrush="#F8A0C8"
@@ -18,9 +19,10 @@
                         ResizeBorderThickness="0"
                         UseAeroCaptionButtons="False"/>
   </shell:WindowChrome.WindowChrome>
-  <Grid Margin="6,2">
+  <Grid Margin="8,5">
     <StackPanel Orientation="Horizontal"
-                VerticalAlignment="Center">
+                VerticalAlignment="Center"
+                HorizontalAlignment="Right">
       <!-- Logo -->
       <Image Source="Assets/logo.png"
              Width="22"
