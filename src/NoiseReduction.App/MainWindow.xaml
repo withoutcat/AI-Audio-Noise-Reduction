@@ -58,21 +58,7 @@
                 BorderThickness="0"
                 Cursor="Hand"
                 ToolTip="{Binding TopMostTooltip}"
-                Click="OnTopMostClick">
-          <Button.Style>
-            <Style TargetType="Button">
-              <Setter Property="Background"
-                      Value="Transparent"/>
-              <Style.Triggers>
-                <DataTrigger Binding="{Binding IsTopMost}"
-                             Value="True">
-                  <Setter Property="Background"
-                          Value="{StaticResource TopMostActiveBrush}"/>
-                </DataTrigger>
-              </Style.Triggers>
-            </Style>
-          </Button.Style>
-        </Button>
+                Click="OnTopMostClick"/>
         <Button Content="❐"
                 Width="24"
                 Height="24"

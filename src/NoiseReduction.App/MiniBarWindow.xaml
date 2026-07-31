@@ -66,22 +66,7 @@
               BorderThickness="0"
               FontSize="12"
               Cursor="Hand"
-              VerticalAlignment="Center">
-        <Button.Style>
-          <Style TargetType="Button">
-            <Setter Property="Background"
-                    Value="Transparent"/>
-            <Style.Triggers>
-              <DataTrigger Binding="{Binding IsTopMost}"
-                           Value="True">
-                <Setter Property="Background"
-                        Value="{StaticResource TopMostActiveBrush}"/>
-              </DataTrigger>
-            </Style.Triggers>
-          </Style>
-        </Button.Style>
-
-      </Button>
+              VerticalAlignment="Center"/>
 
       <!-- Expand to main window -->
       <Button Content="⛶"
