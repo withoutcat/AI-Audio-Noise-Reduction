@@ -258,7 +258,7 @@
                   VerticalAlignment="Center"/>
           <Button
             Visibility="{Binding DownloadButtonVisible, Converter={StaticResource BoolToVis}}"
-            ToolTip="查看发布说明"
+            ToolTip="从Github下载最新版本"
             Command="{Binding DownloadUpdateCommand}"
             Margin="4,0,0,0"
             Padding="0"
@@ -280,7 +280,8 @@
                          Foreground="#3D444D"/>
             </Grid>
           </Button>
-          <TextBlock
+          <!-- 这部分会显示更新说明，不过log panel 里已经有了更新说明这里就啰嗦了，不过不想直接删除 -->
+          <!-- <TextBlock
             Text="{Binding UpdateReleaseNotes}"
             Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}"
             MaxHeight="80"
@@ -288,7 +289,7 @@
             FontSize="10"
             Foreground="#5A6472"
             Margin="4,2,0,0"
-            TextTrimming="CharacterEllipsis"/>
+            TextTrimming="CharacterEllipsis"/> -->
         </StackPanel>
         <TextBlock Margin="0,2,0,0"
                    Foreground="#5A6472"
