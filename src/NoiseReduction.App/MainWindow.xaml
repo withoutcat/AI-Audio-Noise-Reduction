@@ -62,12 +62,12 @@
           <Button.Style>
             <Style TargetType="Button">
               <Setter Property="Background"
-                  Value="Transparent"/>
+                      Value="Transparent"/>
               <Style.Triggers>
                 <DataTrigger Binding="{Binding IsTopMost}"
-                    Value="True">
+                             Value="True">
                   <Setter Property="Background"
-                      Value="#30E84393"/>
+                          Value="{StaticResource TopMostActiveBrush}"/>
                 </DataTrigger>
               </Style.Triggers>
             </Style>

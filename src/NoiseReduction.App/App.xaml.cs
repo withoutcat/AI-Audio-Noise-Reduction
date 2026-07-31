@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Threading;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -30,7 +30,7 @@ public partial class App : System.Windows.Application
   private WF.NotifyIcon? _notifyIcon;
 
   /// <summary>Shared ViewModel, created once at startup.</summary>
-    public MainViewModel ViewModel { get; private set; } = null!;
+  public MainViewModel ViewModel { get; private set; } = null!;
 
   public bool IsExiting { get; private set; }
   public bool InstallerLaunched { get; set; }

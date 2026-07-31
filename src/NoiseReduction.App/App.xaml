@@ -4,40 +4,43 @@
              ShutdownMode="OnExplicitShutdown">
   <Application.Resources>
     <SolidColorBrush x:Key="AccentBrush"
-        Color="#1F7A8C"/>
+                     Color="#1F7A8C"/>
     <SolidColorBrush x:Key="SurfaceBrush"
-        Color="#F6F7F9"/>
+                     Color="#F6F7F9"/>
+    <SolidColorBrush x:Key="TopMostActiveBrush"
+                     Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}"
+                     Opacity="0.25"/>
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
     <!-- Start/Stop button style shared between MainWindow and MiniBar -->
     <Style x:Key="StartStopButtonStyle"
-        TargetType="Button">
+           TargetType="Button">
       <Setter Property="Background"
-          Value="{StaticResource AccentBrush}"/>
+              Value="{StaticResource AccentBrush}"/>
       <Setter Property="Foreground"
-          Value="White"/>
+              Value="White"/>
       <Setter Property="MinWidth"
-          Value="84"/>
+              Value="84"/>
       <Setter Property="MinHeight"
-          Value="30"/>
+              Value="30"/>
       <Setter Property="Padding"
-          Value="10,0"/>
+              Value="10,0"/>
       <Setter Property="FontSize"
-          Value="13"/>
+              Value="13"/>
       <Setter Property="ToolTipService.ShowOnDisabled"
-          Value="True"/>
+              Value="True"/>
       <Style.Triggers>
         <DataTrigger Binding="{Binding ToggleButtonText}"
-            Value="停止">
+                     Value="停止">
           <Setter Property="Background"
-              Value="#E74C3C"/>
+                  Value="#E74C3C"/>
         </DataTrigger>
         <Trigger Property="IsEnabled"
-            Value="False">
+                 Value="False">
           <Setter Property="Foreground"
-              Value="#333333"/>
+                  Value="#333333"/>
           <Setter Property="Background"
-              Value="#E0E0E0"/>
+                  Value="#E0E0E0"/>
         </Trigger>
       </Style.Triggers>
     </Style>
@@ -45,7 +48,7 @@
     <!-- Global: show tooltips faster (200ms delay instead of default ~500ms) -->
     <Style TargetType="FrameworkElement">
       <Setter Property="ToolTipService.InitialShowDelay"
-          Value="200"/>
+              Value="200"/>
     </Style>
   </Application.Resources>
 </Application>

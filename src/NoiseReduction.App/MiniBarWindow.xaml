@@ -63,11 +63,25 @@
               Padding="0"
               Click="OnTopMostClick"
               ToolTip="{Binding TopMostTooltip}"
-              Background="Transparent"
               BorderThickness="0"
               FontSize="12"
               Cursor="Hand"
-              VerticalAlignment="Center"/>
+              VerticalAlignment="Center">
+        <Button.Style>
+          <Style TargetType="Button">
+            <Setter Property="Background"
+                    Value="Transparent"/>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsTopMost}"
+                           Value="True">
+                <Setter Property="Background"
+                        Value="{StaticResource TopMostActiveBrush}"/>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Button.Style>
+
+      </Button>
 
       <!-- Expand to main window -->
       <Button Content="⛶"
