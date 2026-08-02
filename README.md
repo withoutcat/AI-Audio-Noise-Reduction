@@ -37,8 +37,8 @@ That's it! Your voice is now crystal clear.
 - **Hot-switch** — Change microphone or denoising mode while running
 - **Smart Setup** — Installer auto-detects and installs VB-CABLE and .NET Runtime
 - **AppID Management** — Verify and persist Agora AppID via dialog
-- **Default Mic Switching** — Optionally set CABLE Output as system default on start, restore on stop
-- **Persistence** — Remembers last device, mode, and AppID
+- **Auto-Switch Mic** — Optionally switch the system default microphone to CABLE Output on start, restore it on stop
+- **Persistence** — Remembers last device, mode, AppID, and settings
 - **Compact UI** — Borderless window with custom title bar
 - **Single Instance** — Mutex-protected against duplicate launches
 - **Debug Mode** — Toggle to see detailed technical logs
@@ -59,7 +59,7 @@ graph LR
 |-------|--------|
 | **Capture** | Select any physical microphone from the UI |
 | **Denoising** | Agora AI Noise Suppression (3 modes) |
-| **Conversion** | 16kHz mono → 48kHz stereo via sample repetition |
+| **Conversion** | SDK outputs 48kHz stereo PCM directly; no conversion needed |
 | **Output** | Writes to VB-CABLE Input → CABLE Output becomes a clean "microphone" |
 
 ---
@@ -103,17 +103,20 @@ The free tier includes **10,000 minutes/month**, more than enough for personal n
 
 ## ⚙️ Configuration
 
-Settings are stored in `config.json` next to the executable:
+Settings are stored in `%LOCALAPPDATA%\AINoiseReduction\config.json`:
 
 ```json
 {
   "AppId": "your_agora_app_id",
-  "LastCaptureDeviceName": "Microphone (Realtek Audio)",
+  "LastUserMicphoneID": "{0.0.1.00000000}.{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}",
   "LastAinsMode": 0,
   "DebugMode": false,
-  "VirtualMicphoneName": "CABLE Output"
+  "AutoSwitchMic": true,
+  "DefaultVirtualMicphoneID": "{0.0.1.00000000}.{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}"
 }
 ```
+
+`DefaultVirtualMicphoneID` is written by the installer when VB-CABLE is detected, and the app also saves it after the first successful start.
 
 ---
 
@@ -171,7 +174,7 @@ dotnet run --project src\NoiseReduction.App
 | `-SkipBridge` | switch   | off        | Skip building the C++ Bridge DLL. Use if the DLL already exists. |
 | `-SkipPublish` | switch   | off        | Skip the `dotnet publish` step. Use if the app was already published. |
 
-Output: `installer\output\AINoiseReduction-{version}-win-x64.exe`aller\output\AINoiseReduction-1.0.0-win-x64.exe`
+Output: `installer\output\AINoiseReduction-{version}-win-x64.exe`
 
 </details>
 
@@ -190,24 +193,14 @@ src/
 │   ├── Devices/                      #   NaudioDeviceManager
 │   └── Pipeline/                     #   AgoraAinsPipelineSession (core)
 ├── NoiseReduction.App/               # WPF UI (MVVM)
-│   ├── Services/                     #   AppConfig, AudioDeviceUtility, UiHelper
+│   ├── App.xaml(.cs)                 #   Single instance, tray icon, window lifecycle
+│   ├── MainWindow.xaml(.cs)          #   Main window
+│   ├── MiniBarWindow.xaml(.cs)       #   Mini bar window
+│   ├── Services/                     #   AppConfig, AppUpdaterService, AudioDeviceSwitcher, AudioDeviceUtility, UiHelper
 │   ├── ViewModels/                   #   MainViewModel, RelayCommand
 │   └── Views/                        #   AppIdDialog
 └── NoiseReduction.Bridge/            # C++ → Agora SDK bridge (DLL)
 ```
-
----
-
-## 🗺️ Roadmap
-
-- [x] Core AI denoising pipeline
-- [x] AppID management & verification
-- [x] Hot-switch microphone / denoising mode
-- [x] Single instance, borderless window, drag support
-- [x] Default mic auto-switch (via COM PolicyConfig)
-- [x] Installer package (bundles VB-CABLE driver detection)
-- [ ] Custom virtual device naming
-- [ ] Device name customization UI
 
 ---
 

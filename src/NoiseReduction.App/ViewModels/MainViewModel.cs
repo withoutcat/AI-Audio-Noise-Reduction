@@ -345,11 +345,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
           .ToList()
           .ForEach(d => SelectableCaptureDevices.Add(d));
 
-      // Try to restore last selected device by name
+      // Try to restore last selected device by Id
       if (!string.IsNullOrEmpty(_config.LastUserMicphoneID))
       {
         var saved = SelectableCaptureDevices.FirstOrDefault(d =>
-            d.Name.Equals(_config.LastUserMicphoneID, StringComparison.OrdinalIgnoreCase));
+            d.Id.Equals(_config.LastUserMicphoneID, StringComparison.OrdinalIgnoreCase));
         if (saved != null)
         {
           _selectedCaptureDevice = saved;

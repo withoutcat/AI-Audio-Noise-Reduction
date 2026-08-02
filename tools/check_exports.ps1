@@ -1,4 +1,8 @@
-$dllPath = "c:\Users\sunzi\OneDrive\projects\AI-audio-noise-reduction\src\NoiseReduction.SdkPoC\bin\Debug\net10.0-windows\agora_rtc_sdk.dll"
+$dllPath = Join-Path $PSScriptRoot "..\res\sdk\Shengwang_Native_SDK_for_Windows_FULL\sdk\x86_64\agora_rtc_sdk.dll"
+if (-not (Test-Path -LiteralPath $dllPath)) {
+  Write-Error "agora_rtc_sdk.dll not found: $dllPath"
+  exit 1
+}
 $bytes = [System.IO.File]::ReadAllBytes($dllPath)
 $text = [System.Text.Encoding]::ASCII.GetString($bytes)
 # Find all printable strings that look like exported function names (agora/Rte/create related)

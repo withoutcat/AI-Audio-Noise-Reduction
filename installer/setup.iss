@@ -675,6 +675,10 @@ begin
 
   SaveStringToFile(LogFile, TS + '=== Post-install ===' + #13#10, True);
 
+  { 写入虚拟麦克风配置到 config.json }
+  if IsVBAudioInstalled() then
+    WriteDefaultVirtualMicConfig();
+
   { ── .NET Desktop Runtime silent install ── }
   if not NeedDotNetDownload then
   begin
@@ -701,10 +705,6 @@ begin
     RegDeleteValue(HKLM,
       'SYSTEM\CurrentControlSet\Control\Session Manager',
       'PendingFileRenameOperations');
-
-  { 写入虚拟麦克风配置到 config.json }
-  if IsVBAudioInstalled() then
-    WriteDefaultVirtualMicConfig();
   end;
 end;
 

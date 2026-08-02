@@ -37,8 +37,8 @@
 - **热切换** — 运行中可随时更换麦克风或降噪模式
 - **智能安装** — 安装程序自动检测并安装 VB-CABLE 和 .NET Runtime
 - **AppID 管理** — 通过对话框验证并持久化保存声网 AppID
-- **默认麦克风切换** — 启动时可自动设置 CABLE Output 为系统默认，停止时恢复
-- **状态持久化** — 记忆上次使用的设备、模式和 AppID
+- **自动切换麦克风** — 可选：开始时自动将系统默认麦克风切换到 CABLE Output，停止时恢复
+- **状态持久化** — 记忆上次使用的设备、模式、AppID 和设置
 - **简洁 UI** — 无边框窗口，自定义标题栏
 - **单实例运行** — 互斥锁防止重复启动
 - **调试模式** — 切换查看详细技术日志
@@ -59,7 +59,7 @@ graph LR
 |------|------|
 | **采集** | 从 UI 选择任意物理麦克风 |
 | **降噪** | 声网 AI 噪声抑制（3 种模式） |
-| **转换** | 16kHz 单声道 → 48kHz 立体声 |
+| **转换** | SDK 直接输出 48kHz 立体声 PCM，无需转换 |
 | **输出** | 写入 VB-CABLE Input → CABLE Output 成为干净的"麦克风" |
 
 ---
@@ -68,7 +68,7 @@ graph LR
 
 ### 使用安装程序（推荐）
 
-从 [Releases](https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases) 下载 `AINoiseReduction-1.0.0-win-x64.exe` 并运行。
+从 [Releases](https://github.com/withoutcat/AI-Audio-Noise-Reduction/releases) 下载 `AINoiseReduction-{version}-win-x64.exe` 并运行。
 
 安装程序将：
 - ✅ 安装主应用程序
@@ -103,17 +103,20 @@ graph LR
 
 ## ⚙️ 配置
 
-配置存储于可执行文件同目录的 `config.json`：
+配置存储于 `%LOCALAPPDATA%\AINoiseReduction\config.json`：
 
 ```json
 {
   "AppId": "你的声网_app_id",
-  "LastCaptureDeviceName": "Microphone (Realtek Audio)",
+  "LastUserMicphoneID": "{0.0.1.00000000}.{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}",
   "LastAinsMode": 0,
   "DebugMode": false,
-  "VirtualMicphoneName": "CABLE Output"
+  "AutoSwitchMic": true,
+  "DefaultVirtualMicphoneID": "{0.0.1.00000000}.{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}"
 }
 ```
+
+`DefaultVirtualMicphoneID` 由安装程序在检测到 VB-CABLE 时写入，应用首次成功启动后也会保存。
 
 ---
 
@@ -148,10 +151,30 @@ dotnet run --project src\NoiseReduction.App
 ### 构建安装包
 
 ```powershell
+# 默认：自动从 git tag 读取版本，Release 配置
 .\build-installer.ps1
+
+# 指定版本
+.\build-installer.ps1 -AppVersion "1.3.0"
+
+# Debug 构建并跳过 Bridge 编译
+.\build-installer.ps1 -Configuration Debug -SkipBridge
+
+# 跳过 dotnet publish（使用已有构建输出）
+.\build-installer.ps1 -SkipPublish
+
+# 完全控制
+.\build-installer.ps1 -AppVersion "1.3.0" -Configuration Debug -SkipBridge -SkipPublish
 ```
 
-输出：`installer\output\AINoiseReduction-1.0.0-win-x64.exe`
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `-AppVersion` | string | *(git tag)* | 覆盖版本号（如 `"1.3.0"`）。未指定时依次回退到最新 git tag、`0.0.0`。 |
+| `-Configuration` | string | `Release` | 构建配置：`Debug` 或 `Release`。 |
+| `-SkipBridge` | switch | 关闭 | 跳过编译 C++ Bridge DLL（DLL 已存在时使用）。 |
+| `-SkipPublish` | switch | 关闭 | 跳过 `dotnet publish`（应用已发布时使用）。 |
+
+输出：`installer\output\AINoiseReduction-{version}-win-x64.exe`
 
 </details>
 
@@ -170,7 +193,10 @@ src/
 │   ├── Devices/                      #   NaudioDeviceManager
 │   └── Pipeline/                     #   AgoraAinsPipelineSession (核心)
 ├── NoiseReduction.App/               # WPF UI (MVVM)
-│   ├── Services/                     #   AppConfig, AudioDeviceUtility, UiHelper
+│   ├── App.xaml(.cs)                 #   单实例、托盘图标、窗口生命周期
+│   ├── MainWindow.xaml(.cs)          #   主窗口
+│   ├── MiniBarWindow.xaml(.cs)       #   迷你条窗口
+│   ├── Services/                     #   AppConfig, AppUpdaterService, AudioDeviceSwitcher, AudioDeviceUtility, UiHelper
 │   ├── ViewModels/                   #   MainViewModel, RelayCommand
 │   └── Views/                        #   AppIdDialog
 └── NoiseReduction.Bridge/            # C++ → 声网 SDK 桥接 (DLL)
