@@ -484,21 +484,22 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
       AppLogger.Instance.Debug($"匹配到渲染设备: {renderDevice.Name}");
 
-      // If the system default capture is still the virtual mic (e.g. previous run exited
-      // uncleanly without restoring), move it back to the selected physical mic BEFORE the
-      // session starts. The SDK latches the default capture device at engine init, so if the
-      // default is CABLE Output at that moment the pipeline captures its own output -> silence.
-      if (_originalDefaultMicId != null && SelectedCaptureDevice != null &&
-          _originalDefaultMicId.Equals(cableOutput.Id, StringComparison.OrdinalIgnoreCase))
+      // The SDK always captures the system default recording device when its audio route
+      // starts (setRecordingDevice only changes the current route; see SDK docs). So BEFORE the
+      // session starts, make sure the system default equals the user-selected mic. This also
+      // covers a stale default left as CABLE Output by an unclean exit, which would otherwise
+      // make the SDK capture its own output -> silence.
+      if (SelectedCaptureDevice != null &&
+          (_originalDefaultMicId == null ||
+           !_originalDefaultMicId.Equals(SelectedCaptureDevice.Id, StringComparison.OrdinalIgnoreCase)))
       {
-        AppLogger.Instance.Warn("[diag] default capture is still CABLE Output (stale state); resetting to selected mic before session start");
+        AppLogger.Instance.Info($"[diag] normalizing default capture to selected mic before session start: {SelectedCaptureDevice.Name}");
         var resetOk = await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(SelectedCaptureDevice.Id));
-        AppLogger.Instance.Debug($"[diag] stale-default reset ok={resetOk}");
+        AppLogger.Instance.Debug($"[diag] default capture normalization ok={resetOk}");
         _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
       }
 
       // Create session to route denoised audio through CABLE Input (render device)
-      AppLogger.Instance.Debug("[diag] creating session...");
       _session = new AgoraAinsPipelineSession(
           _appId,
           SelectedCaptureDevice!,
@@ -509,7 +510,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       _isActive = true;
       _statsTimer.Start();
       RaiseStateChanged();
-      AppLogger.Instance.Debug("[diag] calling session.Start()...");
       await Task.Run(() => _session.Start());
       AppLogger.Instance.Debug("[diag] session.Start() returned");
 
@@ -561,7 +561,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     // Restore original default microphone if auto-switch was enabled
     if (AutoSwitchMic && !string.IsNullOrEmpty(_originalDefaultMicId))
     {
-      AppLogger.Instance.Debug($"[diag] queuing default mic restore to: {_originalDefaultMicId}");
       _pendingSwitchTask = RestoreOriginalMicAsync();
       _originalDefaultMicId = null;
     }
@@ -591,9 +590,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       }
 
       // Use AudioDeviceSwitcher (AudioDeviceCmdlets) to switch
-      AppLogger.Instance.Debug($"[diag] switching default capture to: {cableOutput.Id} ({cableOutput.Name})");
       var ok = await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(cableOutput.Id));
-      AppLogger.Instance.Debug($"[diag] AudioDeviceSwitcher returned: {ok}");
       return ok;
     }
     catch (Exception ex)
