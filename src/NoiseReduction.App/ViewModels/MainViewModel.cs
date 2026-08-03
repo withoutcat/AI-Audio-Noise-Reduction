@@ -30,6 +30,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   private string _statusMessage = "选择麦克风，然后点击开始。";
   private string _appId = "";
   private string? _originalDefaultMicId;
+  private Task? _pendingSwitchTask;
   private double _cpuUsage;
   private long _memoryUsageMB;
   private readonly AppUpdaterService _updater = null!;
@@ -217,12 +218,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
           if (value)
           {
             // User just enabled auto-switch while running → switch to CABLE Output
-            SwitchToCableOutput();
+            _ = SwitchToCableOutputAsync();
           }
           else
           {
             // User just disabled auto-switch while running → restore original mic
-            RestoreOriginalMic();
+            _ = RestoreOriginalMicAsync();
           }
         }
       }
@@ -428,8 +429,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     try
     {
 
-      // Save original mic ID BEFORE any async operation
+      // Wait for any in-flight switch/restore from a previous Stop() before starting a new session,
+      // otherwise two PowerShell processes race to set the default device.
+      if (_pendingSwitchTask != null)
+      {
+        AppLogger.Instance.Debug("[diag] awaiting pending device switch from previous stop...");
+        try { await _pendingSwitchTask; }
+        catch (Exception ex) { AppLogger.Instance.Error(ex, "[diag] pending switch failed"); }
+        _pendingSwitchTask = null;
+      }
+
+      // Save original mic ID AFTER any pending restore has settled
       _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
+      AppLogger.Instance.Debug($"[diag] original default capture: {_originalDefaultMicId ?? "(null)"}");
+
       var cableOutput = SystemCaptureDevices.FirstOrDefault(d =>
           !string.IsNullOrEmpty(_config.DefaultVirtualMicphoneID) &&
           d.Id == _config.DefaultVirtualMicphoneID)
@@ -471,14 +484,21 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
       AppLogger.Instance.Debug($"匹配到渲染设备: {renderDevice.Name}");
 
-      // Auto-switch to CABLE Output if enabled
-      if (AutoSwitchMic)
+      // If the system default capture is still the virtual mic (e.g. previous run exited
+      // uncleanly without restoring), move it back to the selected physical mic BEFORE the
+      // session starts. The SDK latches the default capture device at engine init, so if the
+      // default is CABLE Output at that moment the pipeline captures its own output -> silence.
+      if (_originalDefaultMicId != null && SelectedCaptureDevice != null &&
+          _originalDefaultMicId.Equals(cableOutput.Id, StringComparison.OrdinalIgnoreCase))
       {
-        SwitchToCableOutput();
+        AppLogger.Instance.Warn("[diag] default capture is still CABLE Output (stale state); resetting to selected mic before session start");
+        var resetOk = await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(SelectedCaptureDevice.Id));
+        AppLogger.Instance.Debug($"[diag] stale-default reset ok={resetOk}");
+        _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
       }
 
-
       // Create session to route denoised audio through CABLE Input (render device)
+      AppLogger.Instance.Debug("[diag] creating session...");
       _session = new AgoraAinsPipelineSession(
           _appId,
           SelectedCaptureDevice!,
@@ -489,7 +509,19 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       _isActive = true;
       _statsTimer.Start();
       RaiseStateChanged();
+      AppLogger.Instance.Debug("[diag] calling session.Start()...");
       await Task.Run(() => _session.Start());
+      AppLogger.Instance.Debug("[diag] session.Start() returned");
+
+      // Switch the system default capture to CABLE Output AFTER the session is fully up.
+      // Order matters: the SDK must latch the physical mic at engine init; changing the
+      // default afterwards is safe because followSystemRecordingDevice(false) keeps it there.
+      if (AutoSwitchMic)
+      {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var ok = await SwitchToCableOutputAsync();
+        AppLogger.Instance.Info($"[diag] default mic switch done ok={ok} in {sw.ElapsedMilliseconds}ms");
+      }
 
       StatusMessage = "AI降噪运行中";
     }
@@ -529,7 +561,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     // Restore original default microphone if auto-switch was enabled
     if (AutoSwitchMic && !string.IsNullOrEmpty(_originalDefaultMicId))
     {
-      RestoreOriginalMic();
+      AppLogger.Instance.Debug($"[diag] queuing default mic restore to: {_originalDefaultMicId}");
+      _pendingSwitchTask = RestoreOriginalMicAsync();
       _originalDefaultMicId = null;
     }
     StatusMessage = "降噪已停止";
@@ -540,7 +573,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   /// Switch system default capture device to CABLE Output using AudioDeviceCmdlets.
   /// Called when auto-switch is enabled and denoising starts or is toggled on.
   /// </summary>
-  private async void SwitchToCableOutput()
+  private async Task<bool> SwitchToCableOutputAsync()
   {
     try
     {
@@ -554,16 +587,19 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       if (cableOutput == null)
       {
         AppLogger.Instance.Warn("未找到虚拟麦克风(CABLE Output)，请检查 VB-CABLE 是否已安装。");
-        return;
+        return false;
       }
 
-
       // Use AudioDeviceSwitcher (AudioDeviceCmdlets) to switch
-      await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(cableOutput.Id));
+      AppLogger.Instance.Debug($"[diag] switching default capture to: {cableOutput.Id} ({cableOutput.Name})");
+      var ok = await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(cableOutput.Id));
+      AppLogger.Instance.Debug($"[diag] AudioDeviceSwitcher returned: {ok}");
+      return ok;
     }
     catch (Exception ex)
     {
       AppLogger.Instance.Error(ex, "切换麦克风失败");
+      return false;
     }
   }
 
@@ -571,14 +607,15 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   /// Restore the original default capture device.
   /// Called when denoising stops or auto-switch is toggled off while running.
   /// </summary>
-  private async void RestoreOriginalMic()
+  private async Task RestoreOriginalMicAsync()
   {
     if (string.IsNullOrEmpty(_originalDefaultMicId)) return;
 
     try
     {
       var deviceId = _originalDefaultMicId;
-      await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(deviceId));
+      var ok = await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(deviceId));
+      AppLogger.Instance.Debug($"[diag] restore default mic to {deviceId} ok={ok}");
     }
     catch (Exception ex)
     {

@@ -54,6 +54,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
   private long _totalFramesProcessed;
   private long _totalBytesProcessed;
   private byte[]? _pcmBuffer;
+  private bool _stopping;
 
   public bool IsRunning { get; private set; }
   public long TotalFramesProcessed => _totalFramesProcessed;
@@ -77,6 +78,8 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
   {
     if (IsRunning) return;
 
+    _stopping = false;
+    var startWatch = System.Diagnostics.Stopwatch.StartNew();
     _logger.Info("正在启动AI降噪...");
     _logger.Info("正在加载桥接库...");
 
@@ -137,8 +140,14 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     {
       _wasapiOut = new WasapiOut(renderDevice, AudioClientShareMode.Shared, false, 50);
       _wasapiOut.Init(_bufferProvider);
+      _wasapiOut.PlaybackStopped += (_, e) =>
+      {
+        if (_stopping) return;
+        _logger.Error(e.Exception ?? new InvalidOperationException("WASAPI PlaybackStopped"),
+            "WASAPI 输出流意外停止！CABLE Input 将没有声音");
+      };
       wasapiOk = true;
-      _logger.Info("音频输出: WASAPI 共享模式");
+      _logger.Info($"音频输出: WASAPI 共享模式 (+{startWatch.ElapsedMilliseconds}ms)");
     }
     catch (Exception exWasapi)
     {
@@ -164,11 +173,19 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
 
       if (waveOutDeviceNum >= 0)
       {
-        var waveOut = new WaveOutEvent();
-        waveOut.DeviceNumber = waveOutDeviceNum;
+        var waveOut = new WaveOutEvent
+        {
+          DeviceNumber = waveOutDeviceNum
+        };
         waveOut.Init(_bufferProvider);
+        waveOut.PlaybackStopped += (_, e) =>
+        {
+          if (_stopping) return;
+          _logger.Error(e.Exception ?? new InvalidOperationException("WaveOut PlaybackStopped"),
+              "WaveOut 输出流意外停止！CABLE Input 将没有声音");
+        };
         _waveOutEvent = waveOut;
-        _logger.Info("音频输出: WaveOut");
+        _logger.Info($"音频输出: WaveOut (+{startWatch.ElapsedMilliseconds}ms)");
       }
       else
       {
@@ -182,14 +199,16 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     _registerCallback(_audioCallback, IntPtr.Zero);
 
     // Initialize SDK
-    _logger.Info("正在初始化声网引擎...");
+    _logger.Info($"正在初始化声网引擎... (+{startWatch.ElapsedMilliseconds}ms)");
     int ret = _init(_appId);
     if (ret != 0) throw new InvalidOperationException($"初始化失败: {ret}");
+    _logger.Debug($"[diag] SDK init OK (+{startWatch.ElapsedMilliseconds}ms)");
 
     // Register audio observer
     _logger.Info("正在注册音频观察者...");
     ret = _registerObserver();
     if (ret != 0) throw new InvalidOperationException($"注册音频观察者失败: {ret}");
+    _logger.Debug($"[diag] observer registered (+{startWatch.ElapsedMilliseconds}ms)");
 
     // Set recording device AND disable system default following
     if (_captureDevice != null)
@@ -198,9 +217,18 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
       if (captureDeviceId != null)
       {
         ret = _setRecordingDeviceById(captureDeviceId);
-        _logger.Debug($"设置麦克风: {_captureDevice.Name} (返回: {ret})");
+        _logger.Debug($"[diag] 设置麦克风: {_captureDevice.Name} (返回: {ret}) (+{startWatch.ElapsedMilliseconds}ms)");
         _followSystemDevice(false);
         _logger.Debug("已禁止跟随系统默认设备");
+
+        // Verify which device the SDK actually captures from after the switch
+        if (_getRecordingDevice != null)
+        {
+          var devBuf = new byte[512];
+          var r = _getRecordingDevice(devBuf, devBuf.Length);
+          var sdkDevice = System.Text.Encoding.UTF8.GetString(devBuf).TrimEnd('\0');
+          _logger.Debug($"[diag] SDK actual recording device: '{sdkDevice}' (ret={r})");
+        }
       }
     }
 
@@ -208,6 +236,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     _logger.Info("正在加入频道...");
     ret = _join(null, ChannelName, 0);
     if (ret != 0) throw new InvalidOperationException($"加入频道失败: {ret}");
+    _logger.Debug($"[diag] joined channel (+{startWatch.ElapsedMilliseconds}ms)");
 
     if (_captureDevice != null)
       _logger.Info($"当前降噪麦克风: {_captureDevice.Name}");
@@ -221,19 +250,22 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
       _ => "未知"
     };
     ret = _setAINS(1, _ainsMode);
-    if (ret != 0) _logger.Debug($"降噪设置返回: {ret}");
+    _logger.Debug($"[diag] setAINS(1,{_ainsMode}) 返回: {ret} (+{startWatch.ElapsedMilliseconds}ms)");
 
     // Start output
     _wasapiOut?.Play();
     _waveOutEvent?.Play();
+    _logger.Debug($"[diag] output Play() called (+{startWatch.ElapsedMilliseconds}ms)");
     IsRunning = true;
-    _logger.Info($"AI降噪已开启（{modeName}模式）");
+    _logger.Info($"[diag] AI降噪已开启（{modeName}模式） total={startWatch.ElapsedMilliseconds}ms");
   }
 
   public void Stop()
   {
     if (!IsRunning) return;
 
+    _stopping = true;
+    var stopWatch = System.Diagnostics.Stopwatch.StartNew();
     _wasapiOut?.Stop();
     _wasapiOut?.Dispose();
     _wasapiOut = null;
@@ -242,6 +274,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     _waveOutEvent = null;
     _leave?.Invoke();
     _release?.Invoke();
+    _logger.Debug($"[diag] session stopped (+{stopWatch.ElapsedMilliseconds}ms)");
 
     if (_callbackHandle.IsAllocated)
     {
