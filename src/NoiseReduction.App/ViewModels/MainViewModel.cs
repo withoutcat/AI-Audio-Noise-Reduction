@@ -493,7 +493,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
           (_originalDefaultMicId == null ||
            !_originalDefaultMicId.Equals(SelectedCaptureDevice.Id, StringComparison.OrdinalIgnoreCase)))
       {
-        AppLogger.Instance.Info($"[diag] normalizing default capture to selected mic before session start: {SelectedCaptureDevice.Name}");
+        AppLogger.Instance.Debug($"[diag] normalizing default capture to selected mic before session start: {SelectedCaptureDevice.Name}");
         var resetOk = await Task.Run(() => AudioDeviceSwitcher.SetDefaultCaptureDevice(SelectedCaptureDevice.Id));
         AppLogger.Instance.Debug($"[diag] default capture normalization ok={resetOk}");
         _originalDefaultMicId = AudioDeviceUtility.GetDefaultCaptureDeviceId();
@@ -520,7 +520,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
       {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var ok = await SwitchToCableOutputAsync();
-        AppLogger.Instance.Info($"[diag] default mic switch done ok={ok} in {sw.ElapsedMilliseconds}ms");
+        AppLogger.Instance.Debug($"[diag] default mic switch done ok={ok} in {sw.ElapsedMilliseconds}ms");
       }
 
       StatusMessage = "AI降噪运行中";
