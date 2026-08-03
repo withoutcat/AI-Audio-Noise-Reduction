@@ -253,7 +253,7 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     _wasapiOut?.Play();
     _waveOutEvent?.Play();
     IsRunning = true;
-    _logger.Info($"AI降噪已开启（{modeName}模式");
+    _logger.Info($"AI降噪已开启（{modeName}模式）");
   }
 
   public void Stop()
