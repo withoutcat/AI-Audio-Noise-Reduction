@@ -117,9 +117,12 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     _getRecordingDevice = Marshal.GetDelegateForFunctionPointer<GetRecordingDeviceDelegate>(_fpGetRecordingDevice);
 
     // Setup NAudio output to virtual mic (render device = CABLE Input, which is a "speaker")
-    var enumerator = new MMDeviceEnumerator();
-    var renderDevice = enumerator.GetDevice(_renderDevice.Id);
-    var deviceFormat = renderDevice.AudioClient.MixFormat;
+    // Dispose the enumerator/device/format client so each Start/Stop cycle doesn't
+    // accumulate COM objects (NAudio's MMDevice.AudioClient creates a new client per access).
+    using var enumerator = new MMDeviceEnumerator();
+    using var renderDevice = enumerator.GetDevice(_renderDevice.Id);
+    using var formatClient = renderDevice.AudioClient;
+    var deviceFormat = formatClient.MixFormat;
     _logger.Debug($"写入设备: {renderDevice.FriendlyName} [{_renderDevice.Id}]");
     _logger.Debug($"设备格式: {deviceFormat.SampleRate}Hz, {deviceFormat.Channels}ch");
 
@@ -275,6 +278,30 @@ public sealed class AgoraAinsPipelineSession : IAudioPipelineSession, IDisposabl
     {
       _callbackHandle.Free();
     }
+
+    // Unload the bridge DLL so Agora SDK native memory is released and repeated
+    // start/stop cycles don't accumulate module references.
+    if (_bridgeDll != IntPtr.Zero)
+    {
+      NativeLibrary.Free(_bridgeDll);
+      _bridgeDll = IntPtr.Zero;
+    }
+    _fpInit = _fpSetAINS = _fpJoin = _fpLeave = _fpRegisterObserver =
+        _fpRegisterCallback = _fpRelease = _fpSetRecordingDeviceById =
+        _fpFollowSystemDevice = _fpGetRecordingDevice = IntPtr.Zero;
+    _init = null;
+    _setAINS = null;
+    _join = null;
+    _leave = null;
+    _registerObserver = null;
+    _registerCallback = null;
+    _release = null;
+    _setRecordingDeviceById = null;
+    _followSystemDevice = null;
+    _getRecordingDevice = null;
+    _bufferProvider = null;
+    _outputWaveFormat = null;
+    _pcmBuffer = null;
 
     IsRunning = false;
     _logger.Info("AI降噪已停止");

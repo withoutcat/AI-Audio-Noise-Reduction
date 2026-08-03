@@ -44,6 +44,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   private bool _isTamperedCached;
   private TimeSpan _lastCpuTime;
   private DateTime _lastCpuCheck;
+  private DateTime _lastMemLogCheck;
+  private Process? _process;
 
   public MainViewModel()
   {
@@ -328,6 +330,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     _statsTimer.Stop();
     _session?.Dispose();
     AppLogger.Instance.EntryAdded -= OnLogEntryAdded;
+    _process?.Dispose();
+    _process = null;
   }
 
   public void RefreshCaptureDevices()
@@ -557,6 +561,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     _cpuUsage = 0;
     _memoryUsageMB = 0;
     _lastCpuCheck = default;
+    _lastMemLogCheck = default;
 
     // Restore original default microphone if auto-switch was enabled
     if (AutoSwitchMic && !string.IsNullOrEmpty(_originalDefaultMicId))
@@ -646,9 +651,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
   {
     try
     {
-      var process = Process.GetCurrentProcess();
+      // Cache a single Process instance; creating one every 500ms would churn
+      // process handles that only get released at GC.
+      _process ??= Process.GetCurrentProcess();
+      _process.Refresh();
+
       var now = DateTime.UtcNow;
-      var cpuTime = process.TotalProcessorTime;
+      var cpuTime = _process.TotalProcessorTime;
 
       if (_lastCpuCheck != default)
       {
@@ -659,7 +668,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
       _lastCpuTime = cpuTime;
       _lastCpuCheck = now;
-      _memoryUsageMB = process.WorkingSet64 / (1024 * 1024);
+
+      // Private committed memory is the metric to watch for leaks; WorkingSet includes
+      // shared pages and is inflated vs Task Manager's default Memory column.
+      _memoryUsageMB = _process.PrivateMemorySize64 / (1024 * 1024);
+
+      // Periodic full memory snapshot (every 5 minutes) for postmortem analysis.
+      if (_lastMemLogCheck == default || (now - _lastMemLogCheck).TotalSeconds >= 300)
+      {
+        _lastMemLogCheck = now;
+        var gcHeapMB = GC.GetTotalMemory(false) / (1024 * 1024);
+        var workingSetMB = _process.WorkingSet64 / (1024 * 1024);
+        AppLogger.Instance.Debug(
+            $"[diag] 内存画像: WorkingSet={workingSetMB}MB PrivateCommitted={_memoryUsageMB}MB GC堆={gcHeapMB}MB 句柄={_process.HandleCount} 线程={_process.Threads.Count}");
+      }
     }
     catch
     {
