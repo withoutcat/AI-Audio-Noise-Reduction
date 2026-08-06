@@ -3,8 +3,10 @@ using System.Threading;
 using System.IO;
 using System.Runtime.InteropServices;
 using NoiseReduction.App.ViewModels;
+using NoiseReduction.App.Services;
 using NoiseReduction.Core.Logging;
 using WF = System.Windows.Forms;
+using Point = System.Windows.Point;
 
 namespace NoiseReduction.App;
 
@@ -103,10 +105,11 @@ public partial class App : System.Windows.Application
 
   public void ShowMainWindow()
   {
-    if (_miniBarWindow != null && _miniBarWindow.IsVisible)
+    if (_miniBarWindow != null && _miniBarWindow.IsVisible && _mainWindow != null)
     {
-      _mainWindow!.Left = _miniBarWindow.Left;
-      _mainWindow.Top = _miniBarWindow.Top + (_miniBarWindow.Height - _mainWindow.Height) / 2;
+      // 优先回到主窗口上次拖动的位置；从未拖动过时回退到旧行为（与迷你条纵向居中对齐）
+      var fallback = new Point(_miniBarWindow.Left, _miniBarWindow.Top + (_miniBarWindow.Height - _mainWindow.Height) / 2);
+      RestoreWindowPosition(_mainWindow, WindowPositionStore.LastMainWindowPosition, fallback);
       _miniBarWindow.Hide();
     }
 
@@ -121,10 +124,11 @@ public partial class App : System.Windows.Application
 
   public void ShowMiniBar()
   {
-    if (_mainWindow != null && _mainWindow.IsVisible)
+    if (_mainWindow != null && _mainWindow.IsVisible && _miniBarWindow != null)
     {
-      _miniBarWindow!.Left = _mainWindow.Left;
-      _miniBarWindow.Top = _mainWindow.Top + (_mainWindow.Height - _miniBarWindow.Height) / 2;
+      // 优先回到迷你条上次拖动的位置；从未拖动过时回退到旧行为（与主窗口纵向居中对齐）
+      var fallback = new Point(_mainWindow.Left, _mainWindow.Top + (_mainWindow.Height - _miniBarWindow.Height) / 2);
+      RestoreWindowPosition(_miniBarWindow, WindowPositionStore.LastMiniBarPosition, fallback);
       _mainWindow.Hide();
     }
 
@@ -132,6 +136,24 @@ public partial class App : System.Windows.Application
     {
       _miniBarWindow.Show();
       _miniBarWindow.Activate();
+    }
+  }
+
+  /// <summary>
+  /// 将窗口恢复到记住的位置（限制在虚拟屏幕内）；没有记录时使用给定的回退位置。
+  /// </summary>
+  private static void RestoreWindowPosition(Window window, Point? savedPosition, Point fallback)
+  {
+    if (savedPosition is Point position)
+    {
+      var p = WindowPositionStore.ClampToVirtualScreen(position, window.Width, window.Height);
+      window.Left = p.X;
+      window.Top = p.Y;
+    }
+    else
+    {
+      window.Left = fallback.X;
+      window.Top = fallback.Y;
     }
   }
 

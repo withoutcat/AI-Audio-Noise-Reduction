@@ -143,6 +143,7 @@ build-installer.ps1 参数：-AppVersion（默认 git tag）、-Configuration（
 - 异步：UI 线程外访问控件/集合需经 Dispatcher.InvokeAsync；耗时操作使用 Task.Run 并保持取消/释放路径完整（IDisposable 会话）。
 - 配置：新增可持久化设置需在 AppConfig 增加字段，ViewModel setter 中保存，并保证默认值向后兼容。
 - UI：无边框窗口、固定尺寸；控件样式/颜色以现有 XAML 为准（如更新按钮 Background #EDEEF0、BorderBrush #D0D7DE、Foreground #3D444D、Width 50）。
+- 记得定期更新Agents和README里涉及业务逻辑的文字说明使其和代码保持一致
 
 ## 8. Agent 工作方式（通用版）
 

@@ -4,9 +4,11 @@ using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
 using NoiseReduction.App.ViewModels;
+using NoiseReduction.App.Services;
 using NoiseReduction.Core.Logging;
 using SWM = System.Windows.Media;
 using SWI = System.Windows.Input;
+using Point = System.Windows.Point;
 
 namespace NoiseReduction.App;
 
@@ -99,8 +101,22 @@ public partial class MainWindow : Window
   /// <summary>Drag the window by grabbing any blank area.</summary>
   private void OnDragMove(object sender, MouseButtonEventArgs e)
   {
-    if (e.LeftButton == MouseButtonState.Pressed)
+    if (e.LeftButton != MouseButtonState.Pressed)
+      return;
+
+    try
+    {
       DragMove();
+    }
+    catch (InvalidOperationException)
+    {
+      // DragMove can throw (e.g. when mouse capture is lost); position did not change, nothing to record
+      return;
+    }
+
+    // Drag ended: remember the main window position so it can be restored when expanding back
+    if (WindowState == WindowState.Normal)
+      WindowPositionStore.LastMainWindowPosition = new Point(Left, Top);
   }
 
   private void OnMiniBarClick(object sender, RoutedEventArgs e)
